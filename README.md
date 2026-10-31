@@ -11,7 +11,7 @@ same from any static host. [See the live demo](https://roaldnefs.github.io/deckf
 - print to PDF with one page per slide
 - an edit view like PowerPoint's: change text and elements on the slide and save
   the file, or suggest changes and copy them as one prompt for a coding agent
-- about 1,400 lines of plain JavaScript and 50 of CSS, readable in the file itself
+- about 1,500 lines of plain JavaScript and 50 of CSS, readable in the file itself
 
 <p>
   <img src="docs/presenter-view.png" width="49%" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right">
@@ -119,10 +119,12 @@ base64 large images into the HTML.
 
 Press `E` for the edit view, laid out like PowerPoint's: slide thumbnails on the
 left, the slide with its speaker notes below it, and on the right the unsaved
-edits in Edit or the suggestions in Suggest. Every slide shows with all its builds. The play button in the toolbar or
-`E` goes back to the slides. The **Edit** and **Suggest** switch in the toolbar
-says what a click on the slide does: Edit changes the deck, Suggest collects
-suggestions for whoever edits the file. The view opens in Edit.
+edits in Edit or the suggestions in Suggest. Every slide shows with all its
+builds. The play button in the toolbar or `E` goes back to the slides. The
+**Edit** and **Suggest** switch in the toolbar says what a click on the slide
+does: Edit changes the deck, Suggest collects suggestions for whoever edits the
+file. The view opens in Edit the first time, then in the mode you last used in
+this tab. Pressing a suggestion's mark in Edit goes to Suggest.
 
 ### Edit
 
@@ -135,10 +137,14 @@ suggestions for whoever edits the file. The view opens in Edit.
 - Code panels and drawings are selected and moved whole, and not typed in. Neither
   is a block whose children are not all inline, such as a panel of labels: select
   its text instead.
-- Type in the notes pane to change the notes of the slide.
-- The side pane lists every edit not saved yet, by slide. Click one to go there.
-  Hover one for × to remove it, which puts the slide back as it was. Later edits on
-  that slide were made on top of it, so they go too: × asks for a second click then.
+- Type in the notes pane to change the notes of the slide. Notes you empty are
+  removed.
+- The side pane lists every edit not saved yet, by slide. Click one to go there
+  and select its element.
+  Hover one for × to remove just that edit: later edits stay, on the same elements.
+  A later one goes with it only if it can't stand without it, such as text typed in
+  a copy whose duplication is removed, or text retyped over the text being removed.
+  × asks for a second click then.
   **Clear**, clicked twice, removes them all. Removing can't itself be undone.
 - **Undo** or `Cmd/Ctrl+Z` takes back one change at a time, on any slide. An edit
   not saved yet leaves the list. Taking back a saved one joins it, as the file then
@@ -164,9 +170,9 @@ suggestions for whoever edits the file. The view opens in Edit.
 - When the deck has changed, a suggestion follows its element to where it is now.
   If that element has changed or no single match exists, the suggestion is
   labelled **Changed**, and the prompt says so.
-- **Copy prompt**, at the bottom of the suggestions, puts every suggestion on the clipboard as one Markdown
-  prompt that names the deck file, ready to paste into Claude Code or another
-  coding agent working on the deck.
+- **Copy prompt**, at the bottom of the suggestions, puts every suggestion on the
+  clipboard as one Markdown prompt that names the deck file, ready to paste into
+  Claude Code or another coding agent working on the deck.
 - Click a suggestion, or its mark, to change it. Hover one for × to delete it,
   or click **Clear** twice to delete them all; **Undo** brings them back for a
   few seconds.
@@ -174,8 +180,9 @@ suggestions for whoever edits the file. The view opens in Edit.
   status bar fold the thumbnails, notes and side pane away to give the slide
   more room.
 
-A refresh stays in the edit view, in the same mode, but loses unsaved changes. Suggestions are kept per deck in that browser
-(`localStorage`). They are not shared; send the copied prompt instead.
+A refresh stays in the edit view, in the same mode, but loses unsaved changes.
+Suggestions are kept per deck in that browser (`localStorage`). They are not
+shared; send the copied prompt instead.
 
 ## Theming
 

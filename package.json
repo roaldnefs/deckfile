@@ -1,0 +1,36 @@
+{
+  "name": "deckfile",
+  "version": "0.1.0",
+  "description": "Presentations as one self-contained HTML file: no build step, no dependencies, works offline from file://",
+  "license": "MIT",
+  "author": "Roald Nefs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roaldnefs/deckfile.git"
+  },
+  "keywords": [
+    "slides",
+    "presentation",
+    "deck",
+    "html",
+    "single-file",
+    "offline"
+  ],
+  "bin": {
+    "deckfile": "bin/deckfile.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "template.html"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "deckfile",
+  "description": "deckfile: presentations as one self-contained HTML file, and the Claude Code skill that builds them.",
+  "owner": {
+    "name": "Roald Nefs"
+  },
+  "plugins": [
+    {
+      "name": "deckfile",
+      "source": "./",
+      "description": "The deck skill: presentations as one self-contained HTML file on the deckfile engine."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "deckfile",
+  "version": "0.1.0",
+  "description": "Build a presentation as one self-contained HTML file on the deckfile engine: slides, builds, speaker notes, presenter view and print to PDF, with no build step or dependencies.",
+  "author": {
+    "name": "Roald Nefs"
+  },
+  "homepage": "https://github.com/roaldnefs/deckfile",
+  "repository": "https://github.com/roaldnefs/deckfile",
+  "license": "MIT",
+  "keywords": ["slides", "presentation", "deck", "html"]
+}

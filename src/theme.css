@@ -1,0 +1,116 @@
+/* deckfile default theme: white slides, large quiet type and one accent colour; black .dark slides for emphasis.
+   Brand it by changing the tokens in :root; anything bigger goes in your deck's own <style> after this block.
+   See "Theming" in the README. */
+/* ---------- tokens (the part to change per brand) ---------- */
+:root{
+  --primary:#1D1D1F; --black:#000000;
+  --grey:#6E6E73; --light:#F5F5F7; --white:#FFFFFF; --action:#0071E3; --action-dark:#2997FF;
+  --ink:var(--primary); --muted:var(--grey); --accent:var(--action); --panel:var(--light);
+  /* lines on light slides, derived from --primary */
+  --line:rgba(29,29,31,.12);
+  /* OFL fonts only, the same on every platform; fallbacks are generic CSS families, never named system fonts */
+  --font-display:"Inter",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  /* logo slots: url("data:image/svg+xml,…") or none. --logo/--icon sit on light slides,
+     --logo-dark/--icon-dark on .dark slides. --watermark is an optional large mark. */
+  --logo:none; --icon:none; --logo-dark:none; --icon-dark:none;
+  --watermark:none; --watermark-dark:none;
+}
+
+/* ---------- slides (the engine places and scales them; the theme gives them their look) ---------- */
+html,body{background:var(--black)}
+/* the heading stays put from slide to slide; what follows it is centred in the room left */
+.slide{display:flex;flex-direction:column;padding:120px 160px;color:var(--ink);font:400 40px/1.4 var(--font-body);letter-spacing:-.005em;
+  background:var(--white);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.slide>:is(.cols,.keys,.stats,.term,ul){margin-block:auto}
+/* title, closing and divider: one centred thought */
+.slide:is(.title,.closing,.divider){display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center}
+/* title card: each time it is shown, the text rises in */
+.slide.title.current .kicker{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.slide.title.current h1{animation:rise .8s .1s cubic-bezier(.2,.7,.2,1) both}
+.slide.title.current :is(.sub,.byline){animation:rise .8s .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+@media (prefers-reduced-motion:reduce){.slide.title,.slide.title *{animation:none!important}}
+/* optional watermark, large and low-contrast, off to the right */
+.slide::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--watermark) no-repeat right -260px bottom -300px/1250px auto}
+/* logo in the bottom-left corner; icon only on title/closing cards */
+.slide::after{content:"";position:absolute;left:160px;bottom:64px;width:260px;height:60px;
+  background:var(--logo) no-repeat left center/contain}
+.slide.title::after,.slide.closing::after{width:60px;height:60px;background-image:var(--icon)}
+.slide>*{position:relative;z-index:1}
+/* dark emphasis slides */
+.slide.dark{--ink:var(--white);--muted:rgba(255,255,255,.72);--accent:var(--action-dark);
+  --line:rgba(255,255,255,.16);--panel:rgba(255,255,255,.08);
+  background:var(--black)}
+/* dark title card: a faint haze of the accent colour drifts behind the text */
+.slide.dark.title{background:
+  radial-gradient(50% 50% at 30% 30%,color-mix(in srgb,var(--action) 24%,transparent),transparent),
+  radial-gradient(40% 40% at 70% 70%,color-mix(in srgb,var(--action-dark) 14%,transparent),transparent),
+  var(--black);background-size:200% 200%}
+.slide.dark.title.current{animation:drift 24s ease-in-out infinite alternate}
+@keyframes drift{from{background-position:0 0}to{background-position:100% 100%}}
+.slide.dark::before{background-image:var(--watermark-dark)}
+.slide.dark::after{background-image:var(--logo-dark)}
+.slide.dark.title::after,.slide.dark.closing::after{background-image:var(--icon-dark)}
+.counter{position:absolute;right:64px;bottom:48px;font:400 20px/1 var(--font-body);letter-spacing:0;color:var(--muted)}
+
+/* ---------- type ---------- */
+h1{font:600 144px/1.05 var(--font-display);letter-spacing:-.022em;margin:0 0 36px}
+h2{font:600 88px/1.08 var(--font-display);letter-spacing:-.016em;margin:0 0 48px}
+h3{font:600 40px/1.2 var(--font-display);letter-spacing:-.01em;margin:0 0 20px}
+p{margin:0 0 .7em}
+.kicker{font:600 30px/1.2 var(--font-body);letter-spacing:-.01em;color:var(--accent);margin:0 0 20px}
+.sub{font:400 48px/1.25 var(--font-body);letter-spacing:-.01em;color:var(--muted);max-width:1400px;margin:0 0 40px}
+h2+.sub{margin-top:-20px}
+.title h1{font-size:184px}
+.title .sub{max-width:1240px}
+.byline{font-size:28px;color:var(--muted);margin:32px 0 0}
+.divider h1{font-size:176px;margin:0}
+.closing h1{font-size:120px}
+ul,ol{margin:0;padding:0 0 0 1.1em}
+li{margin:0 0 .7em;padding-left:.3em}
+ul{list-style:none;padding-left:0}
+ul li{padding-left:0;font-size:56px;line-height:1.2;letter-spacing:-.012em}
+.agenda{font:600 64px/1.15 var(--font-display);letter-spacing:-.015em;counter-reset:agenda;list-style:none;padding:0}
+.agenda li{counter-increment:agenda;display:flex;align-items:baseline;gap:0;padding:0;margin-bottom:.55em}
+.agenda li::before{content:counter(agenda,decimal-leading-zero);flex:0 0 120px;
+  font:600 32px/1 var(--font-display);letter-spacing:0;color:var(--accent)}
+small,.small{font-size:28px;letter-spacing:-.005em;color:var(--muted)}
+code{font:400 .84em var(--font-mono);letter-spacing:0}
+a{color:inherit}
+
+/* ---------- components ---------- */
+.btn{display:inline-block;padding:22px 40px;border:1px solid var(--ink);border-radius:999px;
+  font:500 28px/1 var(--font-body);letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.btn::after{content:"\00a0›"}
+.btn.action{border-color:var(--action);background:var(--action);color:var(--white)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.stat{background:var(--panel);border-radius:28px;padding:64px 56px}
+.stat .n{font:600 120px/1 var(--font-display);letter-spacing:-.02em;display:block;margin-bottom:24px}
+.stat .cap{font:400 32px/1.3 var(--font-body);letter-spacing:-.005em;color:var(--muted);display:block}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.term{background:var(--panel);border-radius:20px;padding:44px 48px;
+  font:400 28px/1.6 var(--font-mono);letter-spacing:0;color:var(--ink);white-space:pre;overflow:hidden}
+.term .b{color:var(--accent)}
+.term .d{color:var(--muted)}
+.term .w{font-weight:500}
+/* a screenshot or drawing shown as a floating window */
+.window{border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.12)}
+.window>*{display:block;width:100%;height:auto}
+/* separate borders belong to the cells, so a row's line fades in with its build */
+.keys{font-size:36px;line-height:1.3;border-collapse:separate;border-spacing:0;width:100%}
+.keys td{padding:24px 24px 24px 0;border-bottom:1px solid var(--line)}
+.keys tr:last-child td{border-bottom:0}
+.keys td:first-child{width:300px}
+kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--white);box-shadow:0 1px 2px rgba(0,0,0,.08);
+  font:500 .8em/1 var(--font-body);letter-spacing:0;text-align:center;margin-right:8px}
+
+
+/* ---------- print: the title card without its entrance or its haze ---------- */
+@media print{
+  .slide.title *{animation:none!important}
+  .slide.dark.title,.slide.dark.title.current{background:var(--black);animation:none}
+}

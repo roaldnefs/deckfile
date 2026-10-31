@@ -36,8 +36,8 @@ test('the template shows everything in the theme: no class is left without a sli
   assert.deepEqual([...classes].filter(c => !used.has(c)), []);
 });
 
-test('the engine can be inlined: no closing tag inside it', () => {
-  assert.doesNotMatch(read('src/deck.js'), /<\/script/i);
+test('the engine can be inlined: no closing tag or comment opening inside it', () => {
+  assert.doesNotMatch(read('src/deck.js'), /<\/script|<!--/i);
   assert.doesNotMatch(read('src/deck.css'), /<\/style/i);
 });
 

@@ -9,9 +9,9 @@ same from any static host. [See the live demo](https://roaldnefs.github.io/deckf
 - builds, one step at a time or timed
 - a presenter view in a second window, with speaker notes and a timer
 - print to PDF with one page per slide
-- an edit view like PowerPoint's: select an element, suggest a change, and copy
-  the suggestions as one prompt for a coding agent
-- about 1,000 lines of plain JavaScript and 50 of CSS, readable in the file itself
+- an edit view like PowerPoint's: change text and elements on the slide and save
+  the file, or suggest changes and copy them as one prompt for a coding agent
+- about 1,400 lines of plain JavaScript and 50 of CSS, readable in the file itself
 
 <p>
   <img src="docs/presenter-view.png" width="49%" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right">
@@ -66,8 +66,8 @@ talk with `postMessage`, which also works between pages opened from `file://`.
 | `F` | fullscreen |
 | `P` | print to PDF, one page per slide, all builds shown |
 | `S` | presenter view in a second window |
-| `E` | edit view, see [Suggesting edits](#suggesting-edits) |
-| `N` / `Esc` | in the edit view: fold the notes pane / leave the view |
+| `E` | edit view, see [Editing and suggesting](#editing-and-suggesting) |
+| `N` / `Esc` | in the edit view: fold the notes pane / drop the selection, or else leave the view |
 | click / tap / swipe | left 30 % of the screen back, the rest forward; swipe left / right on touch |
 | pointer near the bottom-left corner | buttons for back, the presenter view, the edit view, the shortcuts and forward |
 
@@ -104,7 +104,8 @@ The engine sets `.current` on the slide shown and `.on` on each build it
 reveals, and adds a `<span class="counter">` with the slide number to every
 slide. Style against those classes: `.slide.current .diagram{animation:…}`
 starts an animation each time a slide shows, and `.slide:has(#step2.on)`
-changes a slide as a build lands.
+changes a slide as a build lands. Saving from the edit view leaves all three out
+of the file.
 
 Everything else, such as title cards, dividers, dark slides, stat rows, code
 panels and windows, comes from the theme. Its components are listed in
@@ -114,13 +115,40 @@ Photographs live beside the deck as ordinary files and are referenced by
 relative path. Inline small things such as logos and icons as SVG; don't
 base64 large images into the HTML.
 
-## Suggesting edits
+## Editing and suggesting
 
 Press `E` for the edit view, laid out like PowerPoint's: slide thumbnails on the
-left, the slide with its speaker notes below it, and the suggestions on the
-right. Every slide shows with all its builds, so you mark what will be there.
-The play button in the toolbar or `E` goes back to the slides. Nothing in the view changes the
-deck itself: it collects suggestions for whoever edits the file.
+left, the slide with its speaker notes below it, and on the right the unsaved
+edits in Edit or the suggestions in Suggest. Every slide shows with all its builds. The play button in the toolbar or
+`E` goes back to the slides. The **Edit** and **Suggest** switch in the toolbar
+says what a click on the slide does: Edit changes the deck, Suggest collects
+suggestions for whoever edits the file. The view opens in Edit.
+
+### Edit
+
+- Double-click text to type in it. `Enter` or `Tab` keeps it, `Esc` takes it back,
+  `Shift+Enter` is a new line, and a press elsewhere keeps it. Inline elements such
+  as `<code>` stay. Text you empty deletes its element. Pasted text is plain.
+- Click an element to select it, then **Select parent**, **Move earlier**, **Move
+  later**, **Duplicate** or **Delete** in the toolbar (or the `Delete` key). Moving
+  swaps it with its neighbour, as slides lay out by flow, not by position.
+- Code panels and drawings are selected and moved whole, and not typed in. Neither
+  is a block whose children are not all inline, such as a panel of labels: select
+  its text instead.
+- Type in the notes pane to change the notes of the slide.
+- The side pane lists every edit not saved yet, by slide. Click one to go there.
+  Hover one for × to remove it, which puts the slide back as it was. Later edits on
+  that slide were made on top of it, so they go too: × asks for a second click then.
+  **Clear**, clicked twice, removes them all. Removing can't itself be undone.
+- **Undo** or `Cmd/Ctrl+Z` takes back one change at a time, on any slide. An edit
+  not saved yet leaves the list. Taking back a saved one joins it, as the file then
+  differs from the slide.
+- **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose once per visit in
+  Chromium, and as a download elsewhere. Choose the deck's own file to replace it.
+  It overwrites what is there, so if an agent or editor changed the file since you
+  opened it, reload first. The browser asks before you leave with unsaved changes.
+
+### Suggest
 
 - Move the cursor over the slide and the element under it is outlined in orange.
   Click to select it, click the background to pin a spot, or drag to draw a box
@@ -129,22 +157,24 @@ deck itself: it collects suggestions for whoever edits the file.
 - To select what surrounds an element, such as the card around a line of text,
   click a level in the top line of that box, or press `↑` and `↓` while the box
   is empty.
+- While the box is open, the top bar has **Select parent**, **Select child**,
+  **Delete suggestion** and **Save suggestion**.
 - Each suggestion records its slide and heading, its place in the 1920×1080
   frame, and the element it is on, with a selector and its text.
 - When the deck has changed, a suggestion follows its element to where it is now.
   If that element has changed or no single match exists, the suggestion is
   labelled **Changed**, and the prompt says so.
-- **Copy prompt** puts every suggestion on the clipboard as one Markdown
+- **Copy prompt**, at the bottom of the suggestions, puts every suggestion on the clipboard as one Markdown
   prompt that names the deck file, ready to paste into Claude Code or another
   coding agent working on the deck.
 - Click a suggestion, or its mark, to change it. Hover one for × to delete it,
   or click **Clear** twice to delete them all; **Undo** brings them back for a
   few seconds.
 - Each thumbnail shows how many suggestions its slide has. The buttons in the
-  status bar fold the thumbnails, notes and suggestions away to give the slide
+  status bar fold the thumbnails, notes and side pane away to give the slide
   more room.
 
-A refresh stays in the edit view. Suggestions are kept per deck in that browser
+A refresh stays in the edit view, in the same mode, but loses unsaved changes. Suggestions are kept per deck in that browser
 (`localStorage`). They are not shared; send the copied prompt instead.
 
 ## Theming
@@ -195,6 +225,9 @@ If you'd rather not inline the engine, link it. A plain script works from
 <script src="deckfile/src/deck.js"></script>
 ```
 
+Saving from the edit view writes the engine blocks back unchanged, so
+`update` keeps working on a saved deck.
+
 ## Extending
 
 Don't edit the engine. Put behaviour a deck needs in a small `<script>` of its
@@ -234,6 +267,16 @@ The automated tests run in Chromium. Firefox and Safari are not tested yet.
   no notes.
 - Suggestions stay in the browser that made them. To share them, send the copied
   prompt.
+- The browser is the only source a saved file can come from, so the first save
+  rewrites some markup the same way the browser reads it: self-closed SVG tags,
+  `<tbody>` in tables, entities, `&` in links, empty attributes. Comments and
+  indentation stay, and later saves change only what you changed.
+- Saving keeps whatever else is in the page: changes made by a deck's own script,
+  or by a browser extension, end up in the file. Undo replaces a slide's elements,
+  so such a script loses hold of what it found before.
+- A deck saved to another folder loses the photos beside it, as their paths are
+  relative. An open presenter window shows the file as it was: reopen it after
+  saving.
 - The edit view's side panes have a fixed width. In a small window, fold them away
   with the buttons in its status bar.
 - Photos sit beside the file, so a deck with photos travels as a folder.

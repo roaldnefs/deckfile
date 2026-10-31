@@ -546,6 +546,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
   const here = location.href.split(/[?#]/)[0];
   const KEY = 'deck:' + location.pathname;
   const EDIT_KEY = KEY + ':edit';
+  const MODE_KEY = KEY + ':mode';
   const store = {
     get: (key = KEY) => { try { return sessionStorage.getItem(key); } catch { return null; } },
     set: (v, key = KEY) => { try { sessionStorage.setItem(key, v); } catch {} }
@@ -556,7 +557,9 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
   let presenterWin = null;  // deck: the presenter window, once it has said hello
   let pv = null;            // presenter: its panes and labels
   let editing = false;      // deck: edit mode (E) is on
-  let suggesting = store.get(EDIT_KEY) === 'suggest';  // deck: a click on the slide suggests a change, it does not change it
+  let suggesting = store.get(MODE_KEY) === 'suggest';  // deck: a click on the slide suggests a change, it does not change it
+  const elementIds = new WeakMap();  // deck: the number that says an element and its copies are the same one; see twin
+  let lastElementId = 0;
   let ed = null;            // deck: the edit panel, overlay and suggestions, built the first time E is pressed
   // the edit view's panes around the slide, in px
   const RAIL_W = 216, PANE_W = 320, BAR_H = 52, STATUS_H = 32, NOTES_H = 160, GAP = 24;
@@ -710,7 +713,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
         break;
       case 'Delete': case 'Backspace':
         if (!editing || !ed.sel) return false;
-        alter('Deleted', drop);
+        alter('Deleted', { kind: 'delete' });
         break;
       default: return false;
     }
@@ -989,7 +992,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
       select(null);
     }
     editing = on;
-    store.set(on ? (suggesting ? 'suggest' : 'edit') : '', EDIT_KEY);
+    store.set(on ? '1' : '', EDIT_KEY);
     document.documentElement.classList.toggle('editing', on);
     notes.hidden = !on;
     notes.contentEditable = on && !suggesting;
@@ -1175,8 +1178,8 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     ed = { layer, marks: layer.firstChild, draft: layer.children[1], hover: layer.lastChild, list: $('.e-list'), empty: $('.e-empty'), copy: $('.e-copy'),
       clear: $('.e-clear'), undo: $('.e-undo'), thumbs, where: status.firstChild, ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
       send: ask.querySelector('.e-ask-send'), open: null, key: 'deck:edit:' + location.pathname, items: [],
-      outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undoChange: bar.querySelector('.e-do-undo'),
-      save: bar.querySelector('.e-save'), sel: null, typing: null, done: [], edits: [], file: null,
+      outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undoButton: bar.querySelector('.e-do-undo'),
+      save: bar.querySelector('.e-save'), sel: null, typing: null, done: [], unsaved: [], file: null, notesWere: '', slideLabels: [],
       askTools: bar.querySelector('.e-ask-tools'), panes: [$('.e-edits'), $('.e-suggestions')], editList: $('.e-edits-list'), editEmpty: $('.e-edits-empty'), editClear: $('.e-clear-edits') };
     // a suggestion still empty when the page went away is not kept
     try { ed.items = (JSON.parse(localStorage.getItem(ed.key)) || []).filter(s => s.note.trim()); } catch {}
@@ -1262,21 +1265,12 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
       ed.notesWere = notes.innerHTML;
     });
     notes.addEventListener('blur', () => {
-      const slide = slides[i], before = slide.innerHTML, said = textOf(notes);
-      let n = slide.querySelector('.s-notes');
-      if (notes.innerHTML !== ed.notesWere) {
-        if (!said) n?.remove();
-        else {
-          if (!n) {
-            n = document.createElement('div');
-            n.className = 's-notes';
-            slide.querySelector('.counter').before(n);
-          }
-          n.innerHTML = notes.innerHTML;
-        }
-      }
+      const slide = slides[i], was = slide.innerHTML, before = twin(slide), text = textOf(notes), html = text ? notes.innerHTML : '';
+      if (notes.innerHTML !== ed.notesWere) setNotes(slide, html);
       drawNotes();
-      if (slide.innerHTML !== before) change(slide, before, said ? 'Changed notes' : 'Removed notes', said && `"${clip(said, 60)}"`);
+      if (slide.innerHTML !== was) {
+        change(slide, before, { what: text ? 'Changed notes' : 'Removed notes', detail: text && `"${clip(text, 60)}"`, op: { kind: 'notes', html } });
+      }
     });
     notes.addEventListener('paste', e => {
       e.preventDefault();
@@ -1285,7 +1279,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     // leaving the page loses what has not been saved, so the browser asks first
     addEventListener('beforeunload', e => {
       settle();
-      if (ed.edits.length) e.preventDefault();
+      if (ed.unsaved.length) e.preventDefault();
     });
 
     // Suggest: press, drag and let go on the slide: over 8 slide px of movement is a box, less is a click, which selects the
@@ -1325,12 +1319,12 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     ed.modes.forEach((b, n) => b.addEventListener('click', () => setSuggesting(n === 1)));
     setSuggesting(suggesting);
     bar.querySelector('.e-do-parent').addEventListener('click', () => select(ed.sel.parentElement));
-    bar.querySelector('.e-do-earlier').addEventListener('click', () => alter('Moved earlier', el => swapNodes(el, neighbour(el, -1))));
-    bar.querySelector('.e-do-later').addEventListener('click', () => alter('Moved later', el => swapNodes(el, neighbour(el, 1))));
-    bar.querySelector('.e-do-duplicate').addEventListener('click', () => alter('Duplicated', duplicate));
-    bar.querySelector('.e-do-delete').addEventListener('click', () => alter('Deleted', drop));
-    ed.undoChange.addEventListener('click', undoChange);
-    ed.undoChange.disabled = true;
+    bar.querySelector('.e-do-earlier').addEventListener('click', () => alter('Moved earlier', { kind: 'move', step: -1 }));
+    bar.querySelector('.e-do-later').addEventListener('click', () => alter('Moved later', { kind: 'move', step: 1 }));
+    bar.querySelector('.e-do-duplicate').addEventListener('click', () => alter('Duplicated', { kind: 'duplicate' }));
+    bar.querySelector('.e-do-delete').addEventListener('click', () => alter('Deleted', { kind: 'delete' }));
+    ed.undoButton.addEventListener('click', undoChange);
+    ed.undoButton.disabled = true;
     ed.save.addEventListener('click', saveDeck);
     bar.querySelector('.e-show').addEventListener('click', () => edit(false));
     bar.querySelector('.e-present').addEventListener('click', () => act('s'));
@@ -1354,30 +1348,27 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
       ed.copy.lastChild.textContent = ok ? 'Copied' : 'Copy failed';
       setTimeout(() => { ed.copy.lastChild.textContent = 'Copy prompt'; }, 2000);
     }));
-    // so does this Clear, which takes back every unsaved edit and stays on this slide
-    ed.editClear.addEventListener('click', () => {
-      if (ed.editClear.textContent === 'Clear') {
-        ed.editClear.lastChild.textContent = 'Click again';
-        setTimeout(() => { ed.editClear.lastChild.textContent = 'Clear'; }, 3000);
+    // a Clear wants a second click within 3 s
+    const clickTwice = (button, fn) => button.addEventListener('click', () => {
+      if (button.textContent === 'Clear') {
+        button.lastChild.textContent = 'Click again';
+        setTimeout(() => { button.lastChild.textContent = 'Clear'; }, 3000);
         return;
       }
-      const at = i;
-      while (ed.edits.length) removeEdit(ed.edits[0]);
-      ed.editClear.lastChild.textContent = 'Clear';
-      show(at, true);
+      button.lastChild.textContent = 'Clear';
+      fn();
     });
-    // Clear wants a second click within 3 s
-    ed.clear.addEventListener('click', () => {
-      if (ed.clear.textContent === 'Clear') {
-        ed.clear.lastChild.textContent = 'Click again';
-        setTimeout(() => { ed.clear.lastChild.textContent = 'Clear'; }, 3000);
-        return;
-      }
+    clickTwice(ed.clear, () => {
       offerUndo();
       ed.items = [];
-      ed.clear.lastChild.textContent = 'Clear';
       saveEdit();
       drawEdit();
+    });
+    // takes back every unsaved edit, and stays on this slide
+    clickTwice(ed.editClear, () => {
+      const from = i;
+      while (ed.unsaved.length) removeEdit(ed.unsaved[0]);
+      show(from, true);
     });
     stage.append(layer);
     document.body.append(bar, rail, status, panel, ask);
@@ -1558,50 +1549,64 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
       c.textContent = count;
     });
   }
-  // the edits not saved yet, one label per slide; a click goes to the slide, and selects the element if it is still there.
-  // × removes one, and wants a second click within 3 s when later edits go with it
-  function drawEdits() {
-    ed.editEmpty.hidden = !!ed.edits.length;
-    ed.editClear.disabled = !ed.edits.length;
-    ed.editList.replaceChildren();
-    let at = -1;
-    [...ed.edits].sort((x, y) => slides.indexOf(x.slide) - slides.indexOf(y.slide)).forEach(c => {
-      const n = slides.indexOf(c.slide), cur = n === i ? ' e-cur' : '';
-      if (n !== at) {
-        at = n;
-        const head = headingOf(c.slide), label = document.createElement('div');
-        label.className = 'e-slide' + cur;
-        label.textContent = `Slide ${n + 1}${head ? ' · ' + head : ''}`;
-        label.addEventListener('click', () => show(n, true));
-        ed.editList.append(label);
-      }
-      const row = document.createElement('div');
-      row.className = 'e-change';
-      row.innerHTML = `<div class="e-note">${esc(c.what)}</div><div class="e-el">${esc(c.detail || '')}</div>` +
-        `<button type="button" class="e-change-del" aria-label="Remove edit" title="Remove edit">${icon('close', 12)}</button>`;
-      row.addEventListener('click', () => {
-        show(n, true);
-        if (c.el?.isConnected) select(c.el);
-      });
-      const del = row.lastChild;
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        const later = editsFrom(c).length - 1;
-        if (!later || del.classList.contains('e-armed')) return removeEdit(c);
-        del.classList.add('e-armed');
-        const warn = document.createElement('div');
-        warn.className = 'e-change-warn';
-        warn.textContent = `Also removes ${later} later edit${later > 1 ? 's' : ''} on this slide. Click × again.`;
-        del.before(warn);
-        setTimeout(() => { warn.remove(); del.classList.remove('e-armed'); }, 3000);
-      });
-      ed.editList.append(row);
+  // the row of an unsaved edit: a click goes to the slide, and selects the element if it is still there.
+  // × removes the edit, and wants a second click within 3 s when later edits can't stand without it
+  function unsavedRow(c) {
+    const n = slides.indexOf(c.slide), row = document.createElement('div');
+    row.className = 'e-change';
+    row.innerHTML = `<div class="e-note">${esc(c.what)}</div><div class="e-el">${esc(c.detail || '')}</div>` +
+      `<button type="button" class="e-change-del" aria-label="Remove edit" title="Remove edit">${icon('close', 12)}</button>`;
+    row.addEventListener('click', () => {
+      show(n, true);
+      const el = findById(c.slide, c.shows);
+      if (el) select(el);
     });
+    const del = row.lastChild;
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      const later = without(c).gone.length - 1;
+      if (!later || del.classList.contains('e-armed')) return removeEdit(c);
+      del.classList.add('e-armed');
+      const warn = document.createElement('div');
+      warn.className = 'e-change-warn';
+      warn.textContent = `Also removes ${later} later edit${later > 1 ? 's' : ''} that can't stand without it. Click × again.`;
+      del.before(warn);
+      setTimeout(() => { warn.remove(); del.classList.remove('e-armed'); }, 3000);
+    });
+    return row;
+  }
+  function slideLabel(n) {
+    const label = document.createElement('button');
+    label.type = 'button';
+    label.addEventListener('click', () => show(n, true));
+    return label;
+  }
+  // the edits not saved yet, one label per slide. A press on a row or label may finish what is being typed, which draws the
+  // list again, and the click that follows must still find it there: what is in its place is left in the document
+  function drawUnsaved() {
+    ed.editEmpty.hidden = !!ed.unsaved.length;
+    ed.editClear.disabled = !ed.unsaved.length;
+    const list = [];
+    let shown = -1;
+    [...ed.unsaved].sort((x, y) => slides.indexOf(x.slide) - slides.indexOf(y.slide)).forEach(c => {
+      const n = slides.indexOf(c.slide);
+      if (n !== shown) {
+        shown = n;
+        const head = headingOf(c.slide), label = ed.slideLabels[n] ||= slideLabel(n);
+        label.className = 'e-slide' + (n === i ? ' e-cur' : '');
+        label.textContent = `Slide ${n + 1}${head ? ' · ' + head : ''}`;
+        list.push(label);
+      }
+      list.push(c.row ||= unsavedRow(c));
+    });
+    const on = ed.editList.children;
+    list.forEach((node, k) => { if (on[k] !== node) ed.editList.insertBefore(node, on[k] || null); });
+    while (on.length > list.length) ed.editList.lastChild.remove();
   }
   // the list in the panel, one label per slide, and the marks on the current slide, numbered alike; closes the composer
   function drawEdit() {
     closeAsk();
-    drawEdits();
+    drawUnsaved();
     ed.hover.hidden = true;
     ed.where.textContent = `Slide ${i + 1} of ${slides.length}`;
     ed.thumbs.forEach((t, n) => t.classList.toggle('e-cur', n === i));
@@ -1644,8 +1649,15 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
       m.className = 'e-mark e-' + s.kind + (s.stale ? ' e-stale' : '');
       outline(m, s);
       m.innerHTML = `<span>${pad(n + 1)}</span>`;
-      // the outside-press handler has already closed any other composer; this one may have gone with it if it was empty
-      m.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (ed.items.includes(s)) openAsk(s); });
+      // the outside-press handler has already closed any other composer; this one may have gone with it if it was empty.
+      // From Edit it goes to Suggest, where the suggestion's pane and buttons are
+      m.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!ed.items.includes(s)) return;
+        setSuggesting(true);
+        openAsk(s);
+      });
       // the row and the mark light up together
       const light = (from, to) => {
         from.addEventListener('mouseenter', () => to.classList.add('e-lit'));
@@ -1682,7 +1694,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     settle();
     select(null);
     suggesting = on;
-    store.set(on ? 'suggest' : 'edit', EDIT_KEY);
+    store.set(on ? 'suggest' : 'edit', MODE_KEY);
     notes.contentEditable = !on;
     ed.modes.forEach((b, n) => b.setAttribute('aria-pressed', on === (n === 1)));
     ed.panes.forEach((p, n) => { p.hidden = on !== (n === 1); });
@@ -1716,6 +1728,17 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     ed.tools.querySelector('.e-do-later').disabled = !neighbour(el, 1);
   }
   const isSpace = n => n?.nodeType === Node.TEXT_NODE && !n.data.trim();
+  // an edit keeps the slide from before it as a twin: a copy whose elements are known as the same ones, by the number each got
+  // when first seen, so that an edit can be done again on its own element wherever that has gone
+  function twin(el) {
+    const copy = el.cloneNode(true), theirs = [copy, ...copy.querySelectorAll('*')];
+    [el, ...el.querySelectorAll('*')].forEach((x, k) => {
+      if (!elementIds.has(x)) elementIds.set(x, ++lastElementId);
+      elementIds.set(theirs[k], elementIds.get(x));
+    });
+    return copy;
+  }
+  const findById = (root, id) => id && [root, ...root.querySelectorAll('*')].find(x => elementIds.get(x) === id);
   // two elements trade places; the white space around them in the source stays where it is
   function swapNodes(a, b) {
     const hole = document.createComment('');
@@ -1723,11 +1746,10 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     b.replaceWith(a);
     hole.replaceWith(b);
   }
-  function duplicate(el) {
+  function copyOf(el) {
     const copy = el.cloneNode(true);
     [copy, ...copy.querySelectorAll('[id]')].filter(n => !n.closest('svg')).forEach(n => n.removeAttribute('id'));
-    el.after(...(isSpace(el.previousSibling) ? [el.previousSibling.cloneNode()] : []), copy);
-    ed.sel = copy;
+    return copy;
   }
   function drop(el) {
     if (isSpace(el.previousSibling)) el.previousSibling.remove();
@@ -1738,16 +1760,45 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     const t = clip(textOf(el), 40);
     return t ? `"${t}"` : el.localName;
   }
-  function alter(what, fn) {
-    const slide = slideOf(ed.sel), before = slide.innerHTML, detail = nameOf(ed.sel);
-    fn(ed.sel);
-    change(slide, before, what, detail, ed.sel);
+  function setNotes(slide, html) {
+    let n = slide.querySelector('.s-notes');
+    if (!html) return n?.remove();
+    if (!n) {
+      n = document.createElement('div');
+      n.className = 's-notes';
+      slide.querySelector('.counter').before(n);
+    }
+    n.innerHTML = html;
+  }
+  // do an edit on a slide, or on a copy of one; false if what it was done on is not there, and nothing has changed then
+  function perform(root, op) {
+    if (op.kind === 'notes') {
+      setNotes(root, op.html);
+      return true;
+    }
+    const el = findById(root, op.id), other = el && op.kind === 'move' && neighbour(el, op.step);
+    if (!el || (op.kind === 'move' && !other)) return false;
+    if (op.kind === 'move') swapNodes(el, other);
+    if (op.kind === 'delete') drop(el);
+    if (op.kind === 'text') el.replaceChildren(...twin(op.tree).childNodes);
+    if (op.kind === 'duplicate') el.after(...(isSpace(el.previousSibling) ? [el.previousSibling.cloneNode()] : []), twin(op.made));
+    return true;
+  }
+  // change the selected element; a copy is what is selected next
+  function alter(what, op) {
+    const el = ed.sel, slide = slideOf(el), before = twin(slide), detail = nameOf(el);
+    op.id = elementIds.get(el);
+    if (op.kind === 'duplicate') op.made = twin(copyOf(el));
+    perform(slide, op);
+    const shows = op.made ? elementIds.get(op.made) : op.id;
+    ed.sel = findById(slide, shows) || null;
+    change(slide, before, { what, detail, shows, op });
   }
   // a slide has changed from what it was before: that can be undone, and is unsaved
-  function change(slide, before, what, detail, el) {
-    const edit = { slide, html: before, what, detail, el };
-    ed.done.push(edit);
-    ed.edits.push(edit);
+  function change(slide, before, edit) {
+    const record = { slide, tree: before, ...edit };
+    ed.done.push(record);
+    ed.unsaved.push(record);
     afterChange(slide);
   }
   // bring the view up to date with a changed slide
@@ -1757,7 +1808,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     saveEdit();
     drawEdit();
     select(ed.sel?.isConnected ? ed.sel : null);
-    ed.undoChange.disabled = !ed.done.length;
+    ed.undoButton.disabled = !ed.done.length;
     sendThumb(slides.indexOf(slide));
   }
   function undoChange() {
@@ -1765,23 +1816,38 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     const last = ed.done.pop();
     if (!last) return;
     // an edit not saved yet is as if it never happened; taking back a saved one is an edit in itself
-    const unsaved = ed.edits.indexOf(last);
-    if (unsaved < 0) ed.edits.push({ slide: last.slide, html: last.slide.innerHTML, what: 'Undid: ' + last.what, detail: last.detail, undone: last });
-    else ed.edits.splice(unsaved, 1);
-    last.slide.innerHTML = last.html;
+    const index = ed.unsaved.indexOf(last);
+    if (index < 0) ed.unsaved.push({ slide: last.slide, tree: twin(last.slide), what: 'Undid: ' + last.what, detail: last.detail, undone: last });
+    else ed.unsaved.splice(index, 1);
+    last.slide.replaceChildren(...twin(last.tree).childNodes);
     show(slides.indexOf(last.slide), true);
     afterChange(last.slide);
   }
-  // the edits that go when this one is removed: it, and those after it on its slide, as they were made on top of it
-  const editsFrom = c => ed.edits.filter((x, k) => x.slide === c.slide && k >= ed.edits.indexOf(c));
-  // put the slide back as it was before this edit. An Undid row goes back to before that undo, so what it undid can be undone again
+  // typed text and notes hold all that was there, so they are made on top of earlier ones on the same text or notes
+  const holds = (later, earlier) => (later.op.kind === 'text' || later.op.kind === 'notes') &&
+    later.op.kind === earlier.op?.kind && later.op.id === earlier.op.id;
+  // the slide without this edit: from before it, with each later one done again. What goes with it: undos of saved edits, which
+  // happen in order, and edits on what is no longer there
+  function without(c) {
+    const root = twin(c.tree), gone = [c], kept = [];
+    ed.unsaved.slice(ed.unsaved.indexOf(c) + 1).filter(x => x.slide === c.slide).forEach(x => {
+      const tree = twin(root);
+      if (x.undone || gone.some(g => holds(x, g)) || !perform(root, x.op)) gone.push(x);
+      else kept.push({ record: x, tree });
+    });
+    return { root, gone, kept };
+  }
+  // an Undid row goes back to before that undo, so what it undid can be undone again
   function removeEdit(c) {
-    for (const x of editsFrom(c).reverse()) {
-      ed.edits.splice(ed.edits.indexOf(x), 1);
-      if (x.undone) ed.done.push(x.undone);
+    const { root, gone, kept } = without(c);
+    for (const x of gone.reverse()) {
+      ed.unsaved.splice(ed.unsaved.indexOf(x), 1);
+      // back in its place: before the edits made since
+      if (x.undone) ed.done.splice(kept.length ? ed.done.indexOf(kept[0].record) : ed.done.length, 0, x.undone);
       else ed.done.splice(ed.done.indexOf(x), 1);
     }
-    c.slide.innerHTML = c.html;
+    kept.forEach(k => { k.record.tree = k.tree; });
+    c.slide.replaceChildren(...root.childNodes);
     show(slides.indexOf(c.slide), true);
     afterChange(c.slide);
   }
@@ -1795,19 +1861,19 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     return t;
   }
   function typeInto(el, x, y) {
-    const before = slideOf(el).innerHTML, html = el.innerHTML, said = nameOf(el);
+    const before = twin(slideOf(el)), tree = twin(el), was = nameOf(el);
     select(el);
     // as it reads on the slide: while typing, every space and line break in the source would show
     textNodes(el).forEach(n => { n.data = n.data.replace(/[ \t\r\n\f]+/g, ' '); });
     if (el.firstChild?.nodeType === Node.TEXT_NODE) el.firstChild.data = el.firstChild.data.trimStart();
     if (el.lastChild?.nodeType === Node.TEXT_NODE) el.lastChild.data = el.lastChild.data.trimEnd();
-    ed.typing = { el, before, html, said, clean: el.innerHTML };
+    ed.typing = { el, before, tree, was, clean: el.innerHTML };
     // out of the way of the caret, and of what the marks would catch
     ed.layer.hidden = true;
     el.contentEditable = 'plaintext-only';
     el.focus();
-    const at = document.caretRangeFromPoint?.(x, y), caret = getSelection();
-    if (at && el.contains(at.startContainer)) caret.collapse(at.startContainer, at.startOffset);
+    const point = document.caretRangeFromPoint?.(x, y), caret = getSelection();
+    if (point && el.contains(point.startContainer)) caret.collapse(point.startContainer, point.startOffset);
     else {
       caret.selectAllChildren(el);
       caret.collapseToEnd();
@@ -1830,14 +1896,15 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     el.normalize();
     while (el.lastChild?.localName === 'br' || isSpace(el.lastChild)) el.lastChild.remove();
     if (cancel || el.innerHTML === t.clean) {
-      el.innerHTML = t.html;
+      el.replaceChildren(...twin(t.tree).childNodes);
       select(el);
       return;
     }
+    const id = elementIds.get(el);
     if (!el.textContent.trim() && !el.querySelector('img, svg')) {
       drop(el);
-      change(slide, before, 'Deleted', t.said, el);
-    } else change(slide, before, 'Changed text', `${t.said} → ${nameOf(el)}`, el);
+      change(slide, before, { what: 'Deleted', detail: t.was, op: { kind: 'delete', id } });
+    } else change(slide, before, { what: 'Changed text', detail: `${t.was} → ${nameOf(el)}`, shows: id, op: { kind: 'text', id, tree: twin(el) } });
   }
   // finish what is being typed in the slide and the notes
   function settle() {
@@ -1862,7 +1929,7 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
   async function saveDeck() {
     settle();
     const html = serialize(), name = decodeURIComponent(location.pathname).split('/').pop() || 'index.html';
-    let said = 'Saved';
+    let label = 'Saved';
     try {
       if (window.showSaveFilePicker) {
         ed.file ||= await showSaveFilePicker({ suggestedName: name, types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }] });
@@ -1873,16 +1940,16 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
         const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([html], { type: 'text/html' })), download: name });
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        said = 'Downloaded';
+        label = 'Downloaded';
       }
-      ed.edits = [];
-      drawEdits();
+      ed.unsaved = [];
+      drawUnsaved();
     } catch (e) {
       if (e.name === 'AbortError') return;  // the file dialog was cancelled
       ed.file = null;
-      said = 'Save failed';
+      label = 'Save failed';
     }
-    ed.save.lastChild.textContent = said;
+    ed.save.lastChild.textContent = label;
     setTimeout(() => { ed.save.lastChild.textContent = 'Save'; }, 2000);
   }
   // the clipboard API, or the older execCommand where a browser refuses it

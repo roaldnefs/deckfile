@@ -447,7 +447,7 @@ test('in edit mode the slide fits between the panes at 1024x768', async ({ page 
 
 // the buttons of a part of the chrome that lack an icon or a name; A− / A+, the slide labels and the levels are text by design
 const unmarked = (page, selector) => page.locator(selector).evaluateAll(all => all
-  .filter(b => !b.matches('.p-size button, .e-go, .e-crumb') && !(b.querySelector('svg') && (b.getAttribute('aria-label') || b.textContent.trim())))
+  .filter(b => !b.matches('.p-size button, .e-go, .e-slide, .e-crumb') && !(b.querySelector('svg') && (b.getAttribute('aria-label') || b.textContent.trim())))
   .map(b => b.outerHTML.slice(0, 80)));
 
 test('every button of the edit and presenter views has an icon and a name', async ({ page }) => {
@@ -1487,11 +1487,11 @@ test('the side pane lists every unsaved edit, and Undo and Save take them off', 
   await expect(rows).toHaveCount(0);
 });
 
-test('an unsaved edit can be removed: the slide goes back, with later edits on it, and other slides stay', async ({ page }) => {
+test('an unsaved edit can be removed on its own: later edits on the slide stay, on the same elements', async ({ page }) => {
   await fakeDialog(page);
   await openKnown(page);
   const what = page.locator('.e-change .e-note'), warn = page.locator('.e-change-warn');
-  const remove = async n => { await page.locator('.e-change').nth(n).hover(); await page.locator('.e-change-del').nth(n).click(); };
+  const remove = n => clickOn(page, `.e-change-del >> nth=${n}`);
   const addBang = async sel => {
     await typeIn(page, sel);
     await page.keyboard.press('End');
@@ -1502,55 +1502,168 @@ test('an unsaved edit can be removed: the slide goes back, with later edits on i
   await addBang(`${CUR} h2`);
   await clickOn(page, `${CUR} li:nth-child(1)`);
   await page.locator('.e-do-later').click();
-  await page.keyboard.press('Delete');
+  await page.keyboard.press('Escape');
+  await addBang(`${CUR} li:nth-child(3)`);
   await page.locator('.e-thumb').nth(1).click();
   await addBang(`${CUR} h2`);
-  await expect(what).toHaveText(['Changed text', 'Moved later', 'Deleted', 'Changed text']);
-  expect(await current(page)).toBe(1);
+  await expect(what).toHaveText(['Changed text', 'Moved later', 'Changed text', 'Changed text']);
+  expect(await page.locator('.slide').nth(0).locator('li').allTextContents()).toEqual(['Two', 'One', 'Three!']);
 
-  // the last on its slide goes at once, its thumbnail follows, and the other slide stays as it is
-  await remove(2);
-  await expect(what).toHaveText(['Changed text', 'Moved later', 'Changed text']);
-  expect(await current(page)).toBe(0);
-  expect(await items(page)).toEqual(['Two', 'One', 'Three']);
-  await expect(page.frameLocator('.e-thumb:nth-child(1) iframe').locator('.slide.current li').first()).toHaveText('Two');
-  await expect(page.locator('.slide').nth(1).locator('h2')).toHaveText('No notes yet!');
-
-  // one with later edits says so, and removes nothing until the second click
+  // the first on the slide goes without a question, and everything after it stays; so does the other slide
   await remove(0);
-  await expect(warn).toHaveText('Also removes 1 later edit on this slide. Click × again.');
-  await expect(what).toHaveCount(3);
+  await expect(warn).toHaveCount(0);
+  await expect(what).toHaveText(['Moved later', 'Changed text', 'Changed text']);
+  expect(await current(page)).toBe(0);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  expect(await items(page)).toEqual(['Two', 'One', 'Three!']);
+  await expect(page.locator('.slide').nth(1).locator('h2')).toHaveText('No notes yet!');
+  await expect(page.frameLocator('.e-thumb:nth-child(1) iframe').locator('.slide.current h2')).toHaveText('Heading here');
+
+  // one from the middle: the text stays on its own element, wherever that now is
+  await remove(0);
+  await expect(what).toHaveText(['Changed text', 'Changed text']);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three!']);
+
+  // and Undo steps back over what is left, not over what was removed
+  await undoKey(page);
+  await undoKey(page);
+  await expect(what).toHaveCount(0);
+  expect(await page.locator('.slide').nth(0).evaluate(s => s.innerHTML)).toBe(source);
+  await expect(page.locator('.slide').nth(1).locator('h2')).toHaveText('No notes yet');
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+
+  // an Undid row goes back to before the undo, keeps later edits, and the saved edit can be undone again
+  await page.locator('.e-thumb').nth(0).click();
+  await addBang(`${CUR} h2`);
+  await save(page);
+  await undoKey(page);
+  await addBang(`${CUR} li:nth-child(1)`);
+  await expect(what).toHaveText(['Undid: Changed text', 'Changed text']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  await remove(0);
+  await expect(what).toHaveText(['Changed text']);
   await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
-  // the warning goes away by itself, and then it asks again
-  await expect(warn).toHaveCount(0, { timeout: 4000 });
+  expect(await items(page)).toEqual(['One!', 'Two', 'Three']);
+  await undoKey(page);
+  await expect(what).toHaveCount(0);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await undoKey(page);
+  await expect(what).toHaveText(['Undid: Changed text']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  await remove(0);
+  await expect(what).toHaveCount(0);
+
+  // undos of saved edits happen in order: the last on its own, an earlier one with those after it, and both can be undone again
+  await addBang(`${CUR} li:nth-child(1)`);
+  await save(page);
+  await undoKey(page);
+  await undoKey(page);
+  await expect(what).toHaveText(['Undid: Changed text', 'Undid: Changed text']);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await remove(1);
+  await expect(warn).toHaveCount(0);
+  await expect(what).toHaveText(['Undid: Changed text']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await undoKey(page);
+  await expect(what).toHaveText(['Undid: Changed text', 'Undid: Changed text']);
+  await remove(0);
+  await expect(warn).toHaveText("Also removes 1 later edit that can't stand without it. Click × again.");
+  await remove(0);
+  await expect(what).toHaveCount(0);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
+  expect(await items(page)).toEqual(['One!', 'Two', 'Three']);
+  await undoKey(page);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
+  await undoKey(page);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+});
+
+test('removing an edit does what remains again, and asks first when a later one cannot stand without it', async ({ page }) => {
+  await openKnown(page);
+  const what = page.locator('.e-change .e-note'), warn = page.locator('.e-change-warn');
+  const remove = n => clickOn(page, `.e-change-del >> nth=${n}`);
+  const type = async (sel, text) => {
+    await typeIn(page, sel);
+    await page.keyboard.press('End');
+    await page.keyboard.type(text);
+    await page.keyboard.press('Enter');
+  };
+
+  // two steps of a move: without the first, the element makes the second step only
+  await clickOn(page, `${CUR} li:nth-child(1)`);
+  await page.locator('.e-do-later').click();
+  await page.locator('.e-do-later').click();
+  expect(await items(page)).toEqual(['Two', 'Three', 'One']);
+  await remove(0);
+  expect(await items(page)).toEqual(['Two', 'One', 'Three']);
+  await remove(0);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await expect(what).toHaveCount(0);
+
+  // a deleted element comes back in its place, with later edits on its neighbours kept
+  await clickOn(page, `${CUR} li:nth-child(2)`);
+  await page.keyboard.press('Delete');
+  await type(`${CUR} li:nth-child(2)`, '!');
+  expect(await items(page)).toEqual(['One', 'Three!']);
+  await remove(0);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three!']);
+  await remove(0);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+
+  // text typed in a copy can't stand without the copy: that is said first, and a second click takes both
+  await clickOn(page, `${CUR} li:nth-child(1)`);
+  await page.locator('.e-do-duplicate').click();
+  await page.keyboard.press('Escape');
+  await type(`${CUR} li:nth-child(2)`, '!');
+  await type(`${CUR} h2`, '?');
+  expect(await items(page)).toEqual(['One', 'One!', 'Two', 'Three']);
+  await remove(0);
+  await expect(warn).toHaveText("Also removes 1 later edit that can't stand without it. Click × again.");
+  await expect(what).toHaveCount(3);
+  await remove(0);
+  await expect(what).toHaveText(['Changed text']);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here?');
+  await remove(0);
+
+  // text typed over the same text goes with it, as it holds it; without a later one on that text there is no question
+  await type(`${CUR} h2`, '!');
+  await type(`${CUR} h2`, '?');
+  await type(`${CUR} li:nth-child(1)`, '.');
+  await remove(1);
+  await expect(warn).toHaveCount(0);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
+  await expect(what).toHaveText(['Changed text', 'Changed text']);
+  await type(`${CUR} h2`, '?');
   await remove(0);
   await expect(warn).toHaveCount(1);
   await remove(0);
   await expect(what).toHaveText(['Changed text']);
   await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
-  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
-  // to the letter what it was
-  expect(await page.locator(CUR).evaluate(s => s.innerHTML)).toBe(source);
+  expect(await items(page)).toEqual(['One.', 'Two', 'Three']);
+  await remove(0);
 
-  // what is left can still be undone, and nothing is left to warn about
-  await undoKey(page);
-  await expect(what).toHaveCount(0);
-  await expect(page.locator('.slide').nth(1).locator('h2')).toHaveText('No notes yet');
-  await expect(page.locator('.e-do-undo')).toBeDisabled();
-
-  // an Undid row goes back to before the undo, and the saved edit can be undone again
-  await page.locator('.e-thumb').nth(0).click();
-  await addBang(`${CUR} h2`);
-  await save(page);
-  await undoKey(page);
-  await expect(what).toHaveText(['Undid: Changed text']);
+  // notes are one thing: later notes hold earlier ones, and they are kept apart from the slide's other edits
+  const notes = page.locator('#notes');
+  const addNote = async text => {
+    await notes.click();
+    await page.keyboard.press('ControlOrMeta+End');
+    await page.keyboard.type(text);
+    await page.keyboard.press('Escape');
+  };
+  await addNote(' one');
+  await type(`${CUR} h2`, '!');
+  await addNote(' two');
+  await remove(1);
   await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  await expect(page.locator(`${CUR} .s-notes`)).toContainText('Say this one two');
+  await remove(0);
+  await expect(warn).toHaveCount(1);
   await remove(0);
   await expect(what).toHaveCount(0);
-  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
-  await undoKey(page);
-  await expect(what).toHaveText(['Undid: Changed text']);
-  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  await expect(page.locator(`${CUR} .s-notes`).evaluate(n => n.textContent.trim())).resolves.toBe('Say this');
 });
 
 test('Clear takes back every unsaved edit, on a second click, and stays on the slide', async ({ page }) => {
@@ -1618,6 +1731,107 @@ test('Clear takes back every unsaved edit, on a second click, and stays on the s
   await clear.click();
   await expect(rows).toHaveCount(0);
   await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here!');
+});
+
+test('the list of edits answers while text or notes are being typed', async ({ page }) => {
+  await openKnown(page);
+  const rows = page.locator('.e-change'), warn = page.locator('.e-change-warn');
+  // by the mouse itself: a locator's click sees its target replaced under it and tries again, which is just what a person can't
+  const del = () => clickOn(page, '.e-change-del >> nth=0');
+  const addBang = async sel => {
+    await typeIn(page, sel);
+    await page.keyboard.press('End');
+    await page.keyboard.type('!');
+  };
+  await addBang(`${CUR} h2`);
+  await page.keyboard.press('Enter');
+  await expect(rows).toHaveCount(1);
+
+  // × while typing on the slide: that text is kept, and the edit goes
+  await addBang(`${CUR} li:nth-child(2)`);
+  await del();
+  await expect(rows).toHaveCount(1);
+  await expect(warn).toHaveCount(0);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  expect(await items(page)).toEqual(['One', 'Two!', 'Three']);
+  await del();
+  await expect(rows).toHaveCount(0);
+  expect(await items(page)).toEqual(['One', 'Two', 'Three']);
+
+  // × while typing in the notes
+  await addBang(`${CUR} h2`);
+  await page.keyboard.press('Enter');
+  await page.locator('#notes').click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' now');
+  await del();
+  await expect(rows).toHaveCount(1);
+  await expect(warn).toHaveCount(0);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Heading here');
+  await expect(page.locator(`${CUR} .s-notes`)).toContainText('now');
+  await del();
+  await expect(rows).toHaveCount(0);
+  await expect(page.locator(`${CUR} .s-notes`)).not.toContainText('now');
+
+  // a row and a slide label go to their slide, also from typing on another slide
+  await addBang(`${CUR} h2`);
+  await page.keyboard.press('Enter');
+  await page.locator('.e-thumb').nth(1).click();
+  await addBang(`${CUR} h2`);
+  await clickOn(page, '.e-change >> nth=0');
+  expect(await current(page)).toBe(0);
+  await page.locator('.e-thumb').nth(1).click();
+  await addBang(`${CUR} h2`);
+  await clickOn(page, '.e-slide >> nth=0');
+  expect(await current(page)).toBe(0);
+  await expect(rows).toHaveCount(3);
+});
+
+test('pressing a suggestion mark in Edit goes to Suggest, with one set of buttons', async ({ page }) => {
+  await openKnown(page);
+  await page.locator('.e-mode-suggest').click();
+  await suggest(page, `${CUR} h2`, 'Shorter');
+  await page.locator('.e-mode-edit').click();
+  await clickOn(page, `${CUR} li:nth-child(2)`);
+  await expect(page.locator('.e-tools')).toBeVisible();
+
+  await clickOn(page, '.e-marks .e-mark span');
+  await expect(page.locator('#edit-ask textarea')).toHaveValue('Shorter');
+  await expect(page.locator('.e-mode-suggest')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#edit .e-suggestions')).toBeVisible();
+  await expect(page.locator('.e-ask-tools')).toBeVisible();
+  await expect(page.locator('.e-tools')).toBeHidden();
+  await expect(page.locator('.e-sel')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#edit-ask')).toBeHidden();
+  await expect(page.locator('.e-mode-suggest')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('the edit view opens in the mode last used in this tab, however you left it', async ({ page }) => {
+  await page.keyboard.press('e');
+  await expect(page.locator('.e-mode-edit')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('.e-mode-suggest').click();
+
+  // out and back in
+  await page.keyboard.press('e');
+  await page.keyboard.press('e');
+  await expect(page.locator('.e-mode-suggest')).toHaveAttribute('aria-pressed', 'true');
+
+  // out, a reload, and back in
+  await page.keyboard.press('e');
+  await page.reload();
+  await expect(page.locator('#edit-bar')).toHaveCount(0);
+  await page.keyboard.press('e');
+  await expect(page.locator('.e-mode-suggest')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#edit .e-suggestions')).toBeVisible();
+  await expect(page.locator('#notes')).toHaveAttribute('contenteditable', 'false');
+
+  // and the same for Edit
+  await page.locator('.e-mode-edit').click();
+  await page.keyboard.press('e');
+  await page.reload();
+  await page.keyboard.press('e');
+  await expect(page.locator('.e-mode-edit')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('with every edit removed there is nothing to warn about when leaving', async ({ page }) => {

@@ -79,7 +79,7 @@ plain output line
 </div>
 ```
 
-`white-space:pre` applies, so line breaks inside the div are literal: do not indent the contents. The edit view moves a panel whole and doesn't type in it. It also suits markup and other code. A light panel: `.b` accent (prompt, values), `.w` medium weight (typed command), `.d` muted (output, comments). Keep it to 12 lines or fewer.
+`white-space:pre` applies, so line breaks inside the div are literal: do not indent the contents. It also suits markup and other code. The edit view moves a panel whole and doesn't type in it. A light panel: `.b` accent (prompt, values), `.w` medium weight (typed command), `.d` muted (output, comments). Keep it to 12 lines or fewer.
 
 ## Window
 

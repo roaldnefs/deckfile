@@ -3,7 +3,7 @@
 Presentations as one self-contained HTML file. No build step, no bundler, no
 dependencies: the slides, the engine and the theme live in a single
 `index.html` that opens straight from disk, without a network, and works the
-same from any static host.
+same from any static host. [See the live demo](https://roaldnefs.github.io/deckfile/).
 
 - 1920×1080 slides, scaled to any screen
 - builds, one step at a time or timed

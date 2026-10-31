@@ -50,6 +50,8 @@ Get the user's go-ahead on the outline. Restructuring an outline is cheap; restr
 
 **Never edit the `<style data-deck="engine">` or `<script data-deck="engine">` blocks.** They are replaced whole when the engine is updated (`npx github:roaldnefs/deckfile update <slug>/index.html`). If the engine truly can't do something, add CSS under the deck-specific heading. If behaviour is needed, add a separate small `<script>` after the engine's, and say why.
 
+The user can also change the deck from its edit view and save it. That first save rewrites some markup the way the browser reads it (self-closed SVG tags, `<tbody>`, entities), so don't take such changes in a diff for edits of theirs. Read the file again before changing a deck they may have saved.
+
 ### 4. Speaker notes
 
 Every section ends with `<div class="s-notes">…</div>`. Write what the speaker *says*, in their voice: the opening line, the transition into the next slide, and the one point to stress. Don't restate the slide text. Mark any line meant to be read out word for word as "verbatim".
@@ -72,7 +74,7 @@ If you can run a headless browser, render the deck and look at it: print it to P
 
 Tell the user:
 - The path to the deck, and how to open it (open `index.html` in any browser).
-- How to present: `→`/`Space` next, `←` back, `↓`/`↑` whole slide, `F` fullscreen, `P` print to PDF, `S` presenter view in a second window with notes and a timer, `E` edit view to select elements, suggest changes and copy them as one prompt.
+- How to present: `→`/`Space` next, `←` back, `↓`/`↑` whole slide, `F` fullscreen, `P` print to PDF, `S` presenter view in a second window with notes and a timer, `E` edit view to change text and elements and save the file, or to suggest changes and copy them as one prompt.
 - Which content is marked illustrative and needs real numbers.
 - Any assumptions you made in the brief.
 

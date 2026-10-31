@@ -79,7 +79,7 @@ plain output line
 </div>
 ```
 
-`white-space:pre` applies, so line breaks inside the div are literal: do not indent the contents. It also suits markup and other code. A light panel: `.b` accent (prompt, values), `.w` medium weight (typed command), `.d` muted (output, comments). Keep it to 12 lines or fewer.
+`white-space:pre` applies, so line breaks inside the div are literal: do not indent the contents. The edit view moves a panel whole and doesn't type in it. It also suits markup and other code. A light panel: `.b` accent (prompt, values), `.w` medium weight (typed command), `.d` muted (output, comments). Keep it to 12 lines or fewer.
 
 ## Window
 
@@ -132,7 +132,7 @@ If a layout repeats more than once, give it a class under `/* deck-specific */` 
 <div class="s-notes"><p>What to say, in the speaker's voice.</p></div>
 ```
 
-Put this as the last child of every section. Notes appear in the presenter view (`S`) and the edit view (`E`). They never show on the slide or in the PDF.
+Put this as the last child of every section. Notes appear in the presenter view (`S`) and the edit view (`E`), where they can be changed. They never show on the slide or in the PDF.
 
 ## Builds
 

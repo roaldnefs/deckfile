@@ -1,6 +1,6 @@
 {
   "name": "deckfile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Presentations as one self-contained HTML file: no build step, no dependencies, works offline from file://",
   "license": "MIT",
   "author": "Roald Nefs",

@@ -1,4 +1,4 @@
-/*! deckfile v0.1.0 · engine · MIT License · https://github.com/roaldnefs/deckfile
+/*! deckfile v0.2.0 · engine · MIT License · https://github.com/roaldnefs/deckfile
   A presentation as one self-contained HTML file: no build step, no dependencies, opens offline from file://.
 
   Keys:  → / Space / PgDn  next build or slide     ← / PgUp  previous

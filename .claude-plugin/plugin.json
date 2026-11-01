@@ -1,6 +1,6 @@
 {
   "name": "deckfile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build a presentation as one self-contained HTML file on the deckfile engine: slides, builds, speaker notes, presenter view and print to PDF, with no build step or dependencies.",
   "author": {
     "name": "Roald Nefs"

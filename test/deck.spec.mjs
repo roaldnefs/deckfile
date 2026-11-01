@@ -596,6 +596,8 @@ async function reopenChanged(page, change, edit = s => s) {
   await openSuggest(page);
 }
 const near = (a, b) => { for (const k of ['x', 'y', 'width', 'height']) expect(Math.abs(a[k] - b[k])).toBeLessThan(2); };
+// the first <h1> on a slide, not in the layouts before them
+const FIRST_H1 = /(?<=<div id="stage">[\s\S]*?)<h1>[\s\S]*?<\/h1>/;
 const firstSlide = (html, section) => html.replace(/<div id="stage">\s*\n/, m => m + section);
 
 test('the levels in the suggestion box widen and narrow the selection', async ({ page }) => {
@@ -664,7 +666,7 @@ test('suggestions follow their element when the deck changes', async ({ page }) 
   expect((await copied(page))).toContain('section:nth-child(2)');
 
   // and something new above it on its slide: the outline stays on the element
-  await reopenChanged(page, html => html.replace(/<h1>/, '<p>Above it</p><p>And more</p><h1>'));
+  await reopenChanged(page, html => html.replace(FIRST_H1, h1 => '<p>Above it</p><p>And more</p>' + h1));
   await expect(page.locator('.e-changed')).toHaveCount(0);
   near(await page.locator('.e-marks .e-box').boundingBox(), await page.locator(HEADING).first().boundingBox());
 });
@@ -674,7 +676,7 @@ test('a suggestion whose element changed is flagged, not guessed', async ({ page
   await suggest(page, HEADING, 'Shorter');
 
   // the text is gone: flagged, kept, and the prompt says so
-  await reopenChanged(page, html => html.replace(/<h1>[\s\S]*?<\/h1>/, '<h1>Something else</h1>'));
+  await reopenChanged(page, html => html.replace(FIRST_H1, '<h1>Something else</h1>'));
   await expect(page.locator('.e-changed')).toHaveCount(1);
   await expect(page.locator('.e-marks .e-stale')).toHaveCount(1);
   await expect(page.locator('.e-item .e-n')).toHaveCSS('background-image', 'none');
@@ -688,7 +690,7 @@ test('a suggestion whose element changed is flagged, not guessed', async ({ page
 test('two elements that both match are flagged, not guessed', async ({ page }) => {
   await openSuggest(page);
   await suggest(page, HEADING, 'Shorter');
-  await reopenChanged(page, html => firstSlide(html, `<section class="slide"><p>A copy</p>${html.match(/<h1>[\s\S]*?<\/h1>/)[0]}</section>\n`));
+  await reopenChanged(page, html => firstSlide(html, `<section class="slide"><p>A copy</p>${html.match(FIRST_H1)[0]}</section>\n`));
   await expect(page.locator('.e-changed')).toHaveCount(1);
 });
 
@@ -907,6 +909,23 @@ const typeIn = async (page, selector) => {
   await expect(page.locator(selector)).toHaveAttribute('contenteditable', 'plaintext-only');
 };
 const CUR = '.slide.current';
+// type at the end of the heading of the current slide, and keep it
+async function retype(page, text) {
+  await typeIn(page, `${CUR} h2`);
+  await page.keyboard.press('End');
+  await page.keyboard.type(text);
+  await page.keyboard.press('Enter');
+}
+// a Clear wants a second click
+async function clearEdits(page) {
+  await page.locator('.e-clear-edits').click();
+  await page.locator('.e-clear-edits').click();
+}
+// × on a row of the unsaved edits
+async function pressRowX(row) {
+  await row.hover();
+  await row.locator('.e-change-del').click();
+}
 const items = page => page.locator(`${CUR} li`).allTextContents();
 const undoKey = page => page.keyboard.press('ControlOrMeta+z');
 // a stand-in for the browser's file dialog: what is written ends up in window.saved
@@ -1212,20 +1231,14 @@ test('a thumbnail follows what happens to its slide', async ({ page }) => {
   await openKnown(page);
   const thumb = page.frameLocator('.e-thumb:nth-child(1) iframe').locator('.slide.current h2');
   await expect(thumb).toHaveText('Heading here');
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
   await expect(thumb).toHaveText('Heading here!');
   await undoKey(page);
   await expect(thumb).toHaveText('Heading here');
 
   // one that loads later starts from the deck as it is now
   await page.locator('.e-thumb').nth(1).click();
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
   await page.locator('.e-thumb:nth-child(2) iframe').evaluate(f => { f.src = f.src; });
   await expect(page.frameLocator('.e-thumb:nth-child(2) iframe').locator('.slide.current h2')).toHaveText('No notes yet!');
 });
@@ -1236,10 +1249,7 @@ test('a suggestion follows a direct change: flagged when its element changed, an
   await suggest(page, `${CUR} h2`, 'Shorter');
   await suggest(page, `${CUR} li:nth-child(3)`, 'Fine');
   await page.locator('.e-mode-edit').click();
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
   await expect(page.locator('.e-changed')).toHaveCount(1);
   await clickOn(page, `${CUR} li:nth-child(2)`);
   await page.locator('.e-do-delete').click();
@@ -1280,10 +1290,7 @@ test('saving without changes writes the deck as it was, and again the same', asy
 test('a saved deck opens with the changes in it and nothing of the edit view', async ({ page }) => {
   await fakeDialog(page);
   await openKnown(page);
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
   await clickOn(page, `${CUR} li:nth-child(2)`);
   await page.locator('.e-do-delete').click();
   await page.locator('#notes').click();
@@ -1431,10 +1438,7 @@ test('the side pane lists every unsaved edit, and Undo and Save take them off', 
   await expect(rows).toHaveCount(0);
   await expect(page.locator('.e-edits-empty')).toBeVisible();
 
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
   await expect(page.locator('.e-edits-empty')).toBeHidden();
   await expect(rows.first()).toContainText('Changed text');
   await expect(rows.first()).toContainText('"Heading here" → "Heading here!"');
@@ -1447,10 +1451,7 @@ test('the side pane lists every unsaved edit, and Undo and Save take them off', 
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(' now');
   await page.locator('.e-thumb').nth(1).click();
-  await typeIn(page, `${CUR} h2`);
-  await page.keyboard.press('End');
-  await page.keyboard.type('!');
-  await page.keyboard.press('Enter');
+  await retype(page, '!');
 
   // by slide, each slide's in the order made, with its element; nothing typed and nothing moved adds a row
   await expect(what).toHaveText(['Changed text', 'Moved later', 'Duplicated', 'Deleted', 'Changed notes', 'Changed text']);
@@ -1672,10 +1673,7 @@ test('Clear takes back every unsaved edit, on a second click, and stays on the s
   const clear = page.locator('.e-clear-edits'), rows = page.locator('.e-change');
   const html = n => page.locator('.slide').nth(n).evaluate(s => s.innerHTML);
   const addBang = async () => {
-    await typeIn(page, `${CUR} h2`);
-    await page.keyboard.press('End');
-    await page.keyboard.type('!');
-    await page.keyboard.press('Enter');
+    await retype(page, '!');
   };
   // at the bottom of the pane, with nothing to clear yet; it is not the Clear of the suggestions
   await expect(clear).toBeVisible();
@@ -1874,4 +1872,1060 @@ test('leaving the page with unsaved changes asks first', async ({ page }) => {
   await page.locator('.e-do-duplicate').click();
   await page.reload();
   expect(dialogs).toEqual(['beforeunload']);
+});
+
+// Edit: the slides themselves
+const heads = page => page.evaluate(() => [...document.querySelectorAll('#stage > .slide')].map(s => s.querySelector('h1, h2')?.textContent));
+const rowsSaid = page => page.locator('.e-change .e-note');
+// New slide, choosing the layout if the deck has more than one
+const newSlide = async (page, layout = 'Content') => {
+  await page.locator('.e-do-add').click();
+  if (await page.locator('#edit-layouts').isVisible()) await page.locator('#edit-layouts').getByRole('button', { name: layout, exact: true }).click();
+};
+const LAYOUTS = /<template data-deck="layouts">[\s\S]*?<\/template>\n/;
+const hasLayouts = LAYOUTS.test(readFileSync(deck, 'utf8'));
+// the slides in a saved file; the engine's tag is also named in a comment in the head, so with its line end
+const stageOf = html => html.slice(html.indexOf('<div id="stage">'), html.indexOf('<script data-deck="engine">\n'));
+const previewOf = (page, n) => page.frameLocator(`#edit-layouts button:nth-child(${n + 1}) iframe`).locator('.slide.current');
+const layoutsIn = page => page.evaluate(() => [...document.querySelector('template[data-deck="layouts"]').content.children].map(s => ({ name: s.dataset.layout, classes: s.className })));
+// press a thumbnail and let go on the top or bottom edge of another; `during` runs before letting go
+async function dragThumb(page, from, to, edge = 'top', during = async () => {}) {
+  const a = await page.locator('.e-thumb-frame').nth(from).boundingBox(), b = await page.locator('.e-thumb-frame').nth(to).boundingBox();
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width / 2, b.y + (edge === 'top' ? 4 : b.height - 4), { steps: 5 });
+  await during();
+  await page.mouse.up();
+}
+const removeRow = (page, n) => pressRowX(page.locator('.e-change').nth(n));
+const deleteSlide = async (page, n) => {
+  await page.locator('.e-thumb').nth(n).hover();
+  await page.locator('.e-thumb').nth(n).locator('.e-thumb-del').click();
+};
+const thumbSlide = (page, n) => page.frameLocator(`.e-thumb:nth-child(${n + 1}) iframe`).locator('.slide.current');
+// a deck of only these slides
+const LABELLED = `<!-- first -->
+<section class="slide">
+  <h2>A</h2>
+</section>
+
+<!-- second -->
+<section class="slide dark">
+  <h2>B</h2>
+</section>
+
+<!-- third -->
+<section class="slide">
+  <h2>C</h2>
+</section>`;
+async function openOnly(page, slides) {
+  const html = readFileSync(deck, 'utf8').replace(/<div id="stage">[\s\S]*?<\/div>\s*<script data-deck="engine">/,
+    `<div id="stage">\n\n${slides}\n\n</div>\n\n<script data-deck="engine">`);
+  await page.goto(pathToFileURL(tempFile(html)).href);
+  await page.keyboard.press('e');
+  await expect(page.locator('#edit')).toBeVisible();
+}
+
+test('New slide adds a slide after the current one, ready to type in', async ({ page }) => {
+  await openKnown(page);
+  const n = await page.locator('.slide').count(), was = await heads(page);
+  await newSlide(page);
+  expect(await heads(page)).toEqual([was[0], 'New slide', ...was.slice(1)]);
+  expect(await current(page)).toBe(1);
+  await expect(page.locator('.e-where')).toHaveText(`Slide 2 of ${n + 1}`);
+  await expect(page.locator(`${CUR} .counter`)).toHaveText(`2 / ${n + 1}`);
+  await expect(page.locator('.slide').nth(2).locator('.counter')).toHaveText(`3 / ${n + 1}`);
+  expect(await page.locator(CUR).evaluate(s => s.lastElementChild.className)).toBe('counter');
+  await expect(rowsSaid(page)).toHaveText(['Added slide']);
+  await expect(page.locator('.e-change .e-el')).toHaveText('"New slide"');
+
+  // the thumbnails: one more, each showing what is at its place, also past the slides the file opened with
+  await expect(page.locator('.e-thumb')).toHaveCount(n + 1);
+  await expect(page.locator('.e-thumb').nth(1)).toHaveClass(/e-cur/);
+  await expect(thumbSlide(page, 1).locator('h2')).toHaveText('New slide');
+  await expect(thumbSlide(page, 2).locator('h2')).toHaveText(was[1]);
+  await page.locator('.e-thumb').last().scrollIntoViewIfNeeded();
+  await expect(thumbSlide(page, n).locator('.counter')).toHaveText(`${n + 1} / ${n + 1}`);
+
+  await retype(page, '!');
+  await typeIn(page, `${CUR} li`);
+  await page.keyboard.press('End');
+  await page.keyboard.type('!');
+  await page.keyboard.press('Enter');
+  await expect(thumbSlide(page, 1).locator('h2')).toHaveText('New slide!');
+  await expect(rowsSaid(page)).toHaveText(['Added slide', 'Changed text', 'Changed text']);
+
+  // the new slide takes notes too
+  await page.locator('#notes').click();
+  await page.keyboard.type('Said here');
+  await page.locator('.e-thumb').nth(0).click();
+  await expect(page.locator('.slide').nth(1).locator('.s-notes')).toHaveText('Said here');
+
+  // Suggest changes nothing
+  await page.locator('.e-mode-suggest').click();
+  await expect(page.locator('.e-do-add')).toBeHidden();
+  await page.locator('.e-thumb').nth(0).hover();
+  await expect(page.locator('.e-thumb').nth(0).locator('.e-thumb-del')).toBeHidden();
+});
+
+test('a thumbnail can be dragged to another place, with a line where it will land', async ({ page }) => {
+  await openKnown(page);
+  const was = await heads(page), n = was.length;
+  const classes = await page.locator('.slide').nth(2).getAttribute('class');
+
+  // to the top of the first
+  await dragThumb(page, 2, 0, 'top', async () => {
+    await expect(page.locator('.e-thumb').nth(0)).toHaveClass(/e-drop/);
+    await expect(page.locator('.e-drop')).toHaveCount(1);
+  });
+  await expect(page.locator('.e-drop')).toHaveCount(0);
+  expect(await heads(page)).toEqual([was[2], was[0], was[1], ...was.slice(3)]);
+  expect(await current(page)).toBe(0);
+  await expect(page.locator(`${CUR} .counter`)).toHaveText(`1 / ${n}`);
+  await expect(page.locator('.slide').nth(1).locator('.counter')).toHaveText(`2 / ${n}`);
+  await expect(rowsSaid(page)).toHaveText(['Moved slide']);
+  // a thumbnail shows its slide with the slide's own classes, and its iframe stays where it is
+  await expect(thumbSlide(page, 0)).toHaveClass(new RegExp(classes.split(' ').join('.*')));
+  await expect(thumbSlide(page, 1).locator('h2')).toHaveText(was[0]);
+  await expect(thumbSlide(page, 1)).not.toHaveClass(/dark/);
+
+  // to the bottom of another: the place after it
+  await dragThumb(page, 0, 1, 'bottom');
+  expect(await heads(page)).toEqual([was[0], was[2], was[1], ...was.slice(3)]);
+  expect(await current(page)).toBe(1);
+
+  // dropping it where it is, on either side, is no edit
+  await dragThumb(page, 1, 1, 'top');
+  await dragThumb(page, 1, 1, 'bottom');
+  await dragThumb(page, 1, 0, 'bottom');
+  await dragThumb(page, 1, 2, 'top');
+  await expect(rowsSaid(page)).toHaveText(['Moved slide', 'Moved slide']);
+  expect(await heads(page)).toEqual([was[0], was[2], was[1], ...was.slice(3)]);
+
+  // past the last one
+  await page.locator('.e-thumb').last().scrollIntoViewIfNeeded();
+  await page.locator('.e-thumb').nth(n - 2).click();
+  await dragThumb(page, n - 2, n - 1, 'bottom', async () => {
+    await expect(page.locator('.e-thumb').last()).toHaveClass(/e-drop-end/);
+  });
+  expect((await heads(page)).slice(-2)).toEqual([was[n - 1], was[n - 2]]);
+  expect(await current(page)).toBe(n - 1);
+
+  // a row of a moved slide goes to where that slide is now
+  await page.locator('.e-change').nth(1).click();
+  expect(await current(page)).toBe((await heads(page)).indexOf(was[2]));
+
+  // Suggest does not drag
+  await page.locator('.e-thumb').first().scrollIntoViewIfNeeded();
+  await page.locator('.e-mode-suggest').click();
+  const before = await heads(page);
+  await dragThumb(page, 2, 0);
+  expect(await heads(page)).toEqual(before);
+});
+
+test('Cmd/Ctrl+↑ and ↓ move the current slide, in Edit and not while typing', async ({ page }) => {
+  await openKnown(page);
+  const was = await heads(page);
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual([was[1], was[0], ...was.slice(2)]);
+  expect(await current(page)).toBe(1);
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  expect(await heads(page)).toEqual(was);
+  expect(await current(page)).toBe(0);
+  await expect(rowsSaid(page)).toHaveCount(2);
+
+  // at the end there is no further to go
+  await page.keyboard.press('End');
+  const last = (await heads(page)).length - 1;
+  expect(await current(page)).toBe(last);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect(rowsSaid(page)).toHaveCount(2);
+  await page.keyboard.press('Home');
+
+  await typeIn(page, `${CUR} h2`);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual(was);
+  await page.keyboard.press('Escape');
+
+  await page.locator('.e-mode-suggest').click();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual(was);
+});
+
+test('a slide can be deleted from its thumbnail, except the last one left', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+
+  // another slide: the view stays on this one
+  await page.locator('.e-thumb').nth(1).click();
+  await deleteSlide(page, 0);
+  expect(await heads(page)).toEqual(['B', 'C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('B');
+  await expect(page.locator(`${CUR} .counter`)).toHaveText('1 / 2');
+  await expect(page.locator('.e-thumb')).toHaveCount(2);
+  await expect(rowsSaid(page)).toHaveText(['Deleted slide']);
+  await expect(page.locator('.e-change .e-el')).toHaveText('"A"');
+  await expect(page.locator('.e-slide')).toHaveText(['Deleted slides']);
+  await expect(thumbSlide(page, 0).locator('h2')).toHaveText('B');
+
+  // the current slide: what is in its place shows
+  await deleteSlide(page, 0);
+  expect(await heads(page)).toEqual(['C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('C');
+
+  // one left, so no ×; with another one the × is back
+  await page.locator('.e-thumb').nth(0).hover();
+  await expect(page.locator('.e-thumb-del')).toBeHidden();
+  await newSlide(page);
+  await page.locator('.e-thumb').nth(0).hover();
+  await expect(page.locator('.e-thumb').nth(0).locator('.e-thumb-del')).toBeVisible();
+
+  // a click on a deleted slide's row stays put
+  const at = await current(page);
+  await page.locator('.e-change', { hasText: 'Deleted slide' }).first().click();
+  await page.locator('.e-slide', { hasText: 'Deleted slides' }).click();
+  expect(await current(page)).toBe(at);
+});
+
+test('Undo takes back adding, moving and deleting a slide, each edit on it staying with it', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  await newSlide(page);
+  await retype(page, '!');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await deleteSlide(page, 3);
+  expect(await heads(page)).toEqual(['A', 'B', 'New slide!']);
+  await expect(rowsSaid(page)).toHaveCount(4);
+
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'New slide!', 'C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('C');
+  await expect(page.locator('.slide').last().locator('.counter')).toHaveText('4 / 4');
+  await expect(page.locator('.e-thumb')).toHaveCount(4);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'New slide!', 'B', 'C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('New slide!');
+  await undoKey(page);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('New slide');
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await expect(page.locator(`${CUR} .counter`)).toHaveText(`${await current(page) + 1} / 3`);
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+});
+
+test('a slide edit can be removed on its own, and asks first when a later one cannot stand without it', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  // three moves, of which the last is removed: the others stay. Rows go by where their slide is, so B's comes first
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await page.locator('.e-thumb').nth(0).click();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual(['C', 'B', 'A']);
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(['B', 'C', 'A']);
+  await expect(rowsSaid(page)).toHaveCount(2);
+  await expect(page.locator(`${CUR} .counter`)).toHaveText(`${await current(page) + 1} / 3`);
+  expect(await page.locator('.slide').evaluateAll(s => s.map(x => x.querySelector('.counter').textContent))).toEqual(['1 / 3', '2 / 3', '3 / 3']);
+
+  // what was edited before a move, removed after it: the counter says where the slide is now
+  await clearEdits(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await page.locator('.e-thumb').nth(0).click();
+  await retype(page, '!');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(['B', 'A', 'C']);
+  await expect(page.locator('.slide').nth(1).locator('.counter')).toHaveText('2 / 3');
+  await expect(rowsSaid(page)).toHaveText(['Moved slide']);
+  await clearEdits(page);
+
+  // edits on an added slide go with it, on a second click; those on other slides stay
+  await page.locator('.e-thumb').nth(0).click();
+  await newSlide(page);
+  await retype(page, '!');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await page.locator('.e-thumb').nth(0).click();
+  await retype(page, '?');
+  expect(await heads(page)).toEqual(['A?', 'B', 'New slide!', 'C']);
+  const added = page.locator('.e-change', { hasText: 'Added slide' });
+  await pressRowX(added);
+  await expect(added.locator('.e-change-warn')).toContainText('Also removes 2 later edits');
+  expect(await heads(page)).toEqual(['A?', 'B', 'New slide!', 'C']);
+  await added.locator('.e-change-del').click();
+  expect(await heads(page)).toEqual(['A?', 'B', 'C']);
+  await expect(rowsSaid(page)).toHaveText(['Changed text']);
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+
+  // a move that went after a slide no longer there goes with that slide
+  await page.locator('.e-thumb').nth(0).click();
+  await newSlide(page);
+  await dragThumb(page, 3, 1, 'bottom');
+  expect(await heads(page)).toEqual(['A', 'New slide', 'C', 'B']);
+  const first = page.locator('.e-change', { hasText: 'Added slide' });
+  await pressRowX(first);
+  await expect(first.locator('.e-change-warn')).toContainText('Also removes 1 later edit');
+  await first.locator('.e-change-del').click();
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await expect(rowsSaid(page)).toHaveCount(0);
+
+  // a deleted slide comes back, and the later move stays
+  await deleteSlide(page, 1);
+  await page.locator('.e-thumb').nth(1).click();
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  expect(await heads(page)).toEqual(['C', 'A']);
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(['C', 'A', 'B']);
+  await expect(rowsSaid(page)).toHaveText(['Moved slide']);
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+});
+
+test('removing an added slide does not empty the deck: the delete that needed it goes too', async ({ page }) => {
+  await openOnly(page, '<section class="slide">\n  <h2>A</h2>\n</section>');
+  await expect(page.locator('.e-thumb-del')).toBeHidden();
+  await newSlide(page);
+  await deleteSlide(page, 0);
+  expect(await heads(page)).toEqual(['New slide']);
+  const added = page.locator('.e-change', { hasText: 'Added slide' });
+  await pressRowX(added);
+  await added.locator('.e-change-del').click();
+  expect(await heads(page)).toEqual(['A']);
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await expect(page.locator('.e-thumb')).toHaveCount(1);
+  await expect(page.locator(CUR)).toHaveCount(1);
+});
+
+test('Clear takes back every slide edit and stays on the slide', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  await newSlide(page);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await deleteSlide(page, 0);
+  await page.locator('.e-thumb').nth(2).click();
+  await expect(page.locator(`${CUR} h2`)).toHaveText('C');
+  await clearEdits(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('C');
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+});
+
+test('taking back a saved slide edit is an unsaved edit, which can itself be removed', async ({ page }) => {
+  await fakeDialog(page);
+  await openOnly(page, LABELLED);
+  await newSlide(page);
+  await save(page);
+  await expect(rowsSaid(page)).toHaveCount(0);
+
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+  await expect(rowsSaid(page)).toHaveText(['Undid: Added slide']);
+  await expect(page.locator('.e-slide')).toHaveText(['Deleted slides']);
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(['A', 'New slide', 'B', 'C']);
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await expect(page.locator('.e-thumb')).toHaveCount(4);
+
+  await deleteSlide(page, 3);
+  await save(page);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'New slide', 'B', 'C']);
+  await expect(rowsSaid(page)).toHaveText(['Undid: Deleted slide']);
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(['A', 'New slide', 'B']);
+
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  const moved = await heads(page);
+  await save(page);
+  await undoKey(page);
+  await expect(rowsSaid(page)).toHaveText(['Undid: Moved slide']);
+  expect(await heads(page)).not.toEqual(moved);
+  await removeRow(page, 0);
+  expect(await heads(page)).toEqual(moved);
+});
+
+test('suggestions follow their slide when it moves, are flagged when it goes, and come back with Undo', async ({ page }) => {
+  await openKnown(page);
+  await page.locator('.e-mode-suggest').click();
+  await clickOn(page, `${CUR} li:nth-child(2)`);
+  await page.keyboard.type('Say it better');
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+  await dragThumb(page, 0, 1, 'bottom');
+  const count = n => page.locator('.e-thumb').nth(n).locator('.e-thumb-count');
+  await expect(count(1)).toHaveText('1');
+  await expect(count(0)).toBeHidden();
+  await expect(page.locator('.e-go')).toHaveText(/^Slide 2 · Heading here/);
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+  await expect(page.locator('.e-mark')).toHaveCount(1 + 3);
+
+  await deleteSlide(page, 1);
+  await expect(page.locator('.e-changed')).toHaveCount(1);
+  await undoKey(page);
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+  await expect(count(1)).toHaveText('1');
+  await undoKey(page);
+  await expect(count(0)).toHaveText('1');
+  await expect(count(1)).toBeHidden();
+  await expect(page.locator('.e-go')).toHaveText(/^Slide 1 · Heading here/);
+});
+
+test('a suggestion goes by its slide, not by an element that looks the same on the slide now in its place', async ({ page }) => {
+  await openOnly(page, `<section class="slide">
+  <h2>Same</h2>
+  <p>On the first</p>
+</section>
+<section class="slide">
+  <h2>Same</h2>
+  <p>On the second</p>
+</section>`);
+  await page.locator('.e-mode-suggest').click();
+  await clickOn(page, `${CUR} h2`);
+  await page.keyboard.type('This one');
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect(page.locator('.e-thumb').nth(1).locator('.e-thumb-count')).toHaveText('1');
+  await expect(page.locator('.e-thumb').nth(0).locator('.e-thumb-count')).toBeHidden();
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+});
+
+test('a saved deck has its slides in the new order, each with its comment, and opens as it should', async ({ page }) => {
+  await fakeDialog(page);
+  await openOnly(page, LABELLED);
+  const original = await save(page);
+
+  // what is taken back leaves the file as it was, to the character
+  await newSlide(page);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await page.locator('.e-thumb').nth(1).click();
+  await deleteSlide(page, 1);
+  for (let k = 0; k < 3; k++) await undoKey(page);
+  expect(await save(page)).toBe(original);
+
+  // a comment moves with its slide, and a deleted slide's goes and comes back
+  await page.locator('.e-thumb').nth(2).click();
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  let saved = await save(page);
+  expect(saved).toContain('<!-- third -->\n<section class="slide">\n  <h2>C</h2>\n</section>\n\n<!-- first -->\n<section class="slide">\n  <h2>A</h2>\n</section>\n\n<!-- second -->\n<section class="slide dark">\n  <h2>B</h2>\n</section>\n\n</div>');
+  await deleteSlide(page, 2);
+  saved = await save(page);
+  expect(saved).not.toContain('<!-- second -->');
+  await undoKey(page);
+  saved = await save(page);
+  expect(saved).toContain('<!-- second -->\n<section class="slide dark">');
+
+  // a new slide is written as the others are, and the deck opens with it
+  await page.locator('.e-thumb').nth(0).click();
+  await newSlide(page);
+  saved = await save(page);
+  expect(saved).toContain('</section>\n\n<section class="slide">\n  <h2>New slide</h2>\n  <ul>\n    <li>First point</li>\n  </ul>\n</section>\n\n<!-- first -->');
+  const left = await page.evaluate(h => new DOMParser().parseFromString(h, 'text/html').querySelectorAll('.counter, .slide.current, .e-thumb').length, saved);
+  expect(left).toBe(0);
+
+  await page.goto(pathToFileURL(tempFile(saved)).href);
+  expect(await heads(page)).toEqual(['C', 'New slide', 'A', 'B']);
+  await expect(page.locator(`${CUR} .counter`)).toHaveCount(1);
+  await page.keyboard.press('e');
+  await expect(page.locator('.e-thumb')).toHaveCount(4);
+  await expect(thumbSlide(page, 3)).toHaveClass(/dark/);
+});
+
+test('the × of a thumbnail is in its top right corner, beside the count of suggestions', async ({ page }) => {
+  await openKnown(page);
+  const thumb = page.locator('.e-thumb').nth(0), del = thumb.locator('.e-thumb-del');
+  await thumb.hover();
+  const frame = await thumb.locator('.e-thumb-frame').boundingBox();
+  const alone = await del.boundingBox();
+  expect(frame.x + frame.width - (alone.x + alone.width)).toBeLessThan(8);
+  expect(alone.x - frame.x).toBeGreaterThan(frame.width / 2);
+  expect(alone.y - frame.y).toBeLessThan(8);
+
+  await page.locator('.e-mode-suggest').click();
+  await clickOn(page, `${CUR} h2`);
+  await page.keyboard.type('A suggestion, so that the thumbnail has a count');
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+  await thumb.hover();
+  const count = await thumb.locator('.e-thumb-count').boundingBox(), beside = await del.boundingBox();
+  expect(beside.x + beside.width).toBeLessThanOrEqual(count.x);
+  expect(beside.x - frame.x).toBeGreaterThan(frame.width / 2);
+});
+
+test('New slide opens a menu of the layouts in the deck', async ({ page }) => {
+  test.skip(!hasLayouts, 'this deck has no layouts');
+  await openKnown(page);
+  const menu = page.locator('#edit-layouts'), add = page.locator('.e-do-add');
+  await expect(menu).toBeHidden();
+  await add.click();
+  await expect(menu.locator('button')).toHaveText((await layoutsIn(page)).map(l => l.name));
+  await expect(add).toHaveAttribute('aria-expanded', 'true');
+  expect((await menu.boundingBox()).y).toBeGreaterThanOrEqual((await add.boundingBox()).y + (await add.boundingBox()).height);
+  await expect(page.locator('.e-change')).toHaveCount(0);
+
+  // + again, Esc without leaving the view, a press elsewhere, leaving the view and Suggest all close it
+  await add.click();
+  await expect(menu).toBeHidden();
+  await expect(add).toHaveAttribute('aria-expanded', 'false');
+  await add.click();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(page.locator('#edit')).toBeVisible();
+  await add.click();
+  await page.locator('.e-where').click();
+  await expect(menu).toBeHidden();
+  await add.click();
+  await page.keyboard.press('e');
+  await expect(menu).toBeHidden();
+  await page.keyboard.press('e');
+  await expect(menu).toBeHidden();
+  await add.click();
+  await page.locator('.e-mode-suggest').click();
+  await expect(menu).toBeHidden();
+  await expect(add).toBeHidden();
+});
+
+test('every layout adds a slide after the current one, that fits and can be typed in', async ({ page }) => {
+  test.skip(!hasLayouts, 'this deck has no layouts');
+  await openKnown(page);
+  const layouts = await layoutsIn(page);
+  expect(layouts.length).toBeGreaterThan(1);
+  for (const [k, { name, classes }] of layouts.entries()) {
+    const at = await current(page);
+    await newSlide(page, name);
+    await expect(page.locator('#edit-layouts')).toBeHidden();
+    expect(await current(page)).toBe(at + 1);
+    expect(await page.locator(CUR).getAttribute('class')).toBe(classes + ' current');
+    expect(await page.locator(CUR).getAttribute('data-layout')).toBeNull();
+    expect(await page.locator(CUR).evaluate(s => s.scrollHeight <= s.clientHeight && s.scrollWidth <= s.clientWidth)).toBe(true);
+    await expect(rowsSaid(page)).toHaveCount(k + 1);
+    await expect(page.frameLocator(`.e-thumb:nth-child(${at + 2}) iframe`).locator('.slide.current')).toHaveClass(new RegExp(classes));
+
+    const texts = page.locator(`${CUR} :is(h1, h2, h3, p, li, .kicker)`), n = await texts.count();
+    expect(n).toBeGreaterThan(1);
+    for (let t = 0; t < n; t++) {
+      const b = await texts.nth(t).boundingBox();
+      await page.mouse.dblclick(b.x + b.width / 2, b.y + b.height / 2);
+      await expect(texts.nth(t)).toHaveAttribute('contenteditable', 'plaintext-only');
+      await page.keyboard.press('Escape');
+      await expect(texts.nth(t)).not.toHaveAttribute('contenteditable');
+    }
+    await page.keyboard.press('Escape');
+  }
+  // what is added is taken back like any other edit
+  const was = await page.locator('.e-thumb').count();
+  await undoKey(page);
+  await expect(page.locator('.e-thumb')).toHaveCount(was - 1);
+});
+
+test('a deck with one layout or none adds a slide at once, without a menu', async ({ page }) => {
+  const html = readFileSync(deck, 'utf8').replace(LAYOUTS, '');
+  const open = async file => {
+    await page.goto(pathToFileURL(tempFile(file)).href);
+    await page.keyboard.press('e');
+    await page.locator('.e-do-add').click();
+    await expect(page.locator('#edit-layouts')).toBeHidden();
+  };
+  await open(html);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('New slide');
+  await expect(page.locator(`${CUR} li`)).toHaveText('First point');
+  await open(html.replace('<div id="stage">', '<template data-deck="layouts"></template>\n<div id="stage">'));
+  await expect(page.locator(`${CUR} h2`)).toHaveText('New slide');
+  await open(html.replace('<div id="stage">', '<template data-deck="layouts"><section class="slide dark" data-layout="Mine"><h2>My own</h2></section></template>\n<div id="stage">'));
+  await expect(page.locator(`${CUR} h2`)).toHaveText('My own');
+  await expect(page.locator(CUR)).toHaveClass(/dark/);
+});
+
+test('a deck can have layouts of its own', async ({ page }) => {
+  const mine = '<template data-deck="layouts"><section class="slide" data-layout="Plain"><h2>Plain one</h2></section><section class="slide dark" data-layout="Big"><h2>Big one</h2></section></template>\n';
+  const html = readFileSync(deck, 'utf8').replace(LAYOUTS, '').replace('<div id="stage">', mine + '<div id="stage">');
+  await page.goto(pathToFileURL(tempFile(html)).href);
+  await page.keyboard.press('e');
+  await page.locator('.e-do-add').click();
+  await expect(page.locator('#edit-layouts button')).toHaveText(['Plain', 'Big']);
+  await expect(previewOf(page, 1).locator('h2')).toHaveText('Big one');
+  await expect(previewOf(page, 1)).toHaveClass(/dark/);
+  await page.locator('#edit-layouts').getByRole('button', { name: 'Big' }).click();
+  await expect(page.locator(`${CUR} h2`)).toHaveText('Big one');
+  await expect(page.locator(CUR)).toHaveClass(/dark/);
+});
+
+test('a saved deck keeps its layouts, with the slide added from one written clean', async ({ page }) => {
+  test.skip(!hasLayouts, 'this deck has no layouts');
+  await fakeDialog(page);
+  await openKnown(page);
+  await newSlide(page, (await layoutsIn(page))[0].name);
+  await page.locator('.e-do-add').click();
+  const saved = await save(page);
+  expect(saved).toContain(readFileSync(deck, 'utf8').match(LAYOUTS)[0]);
+  expect(stageOf(saved)).toContain('<section class="slide dark title">\n  <h1>Title</h1>');
+  expect(stageOf(saved)).not.toContain('data-layout');
+  expect(await page.evaluate(h => new DOMParser().parseFromString(h, 'text/html').querySelectorAll('#edit-layouts').length, saved)).toBe(0);
+
+  await page.goto(pathToFileURL(tempFile(saved)).href);
+  await page.keyboard.press('e');
+  await page.locator('.e-do-add').click();
+  await expect(page.locator('#edit-layouts')).toBeVisible();
+});
+
+test('the slide buttons have a section of their own, left of the Edit and Suggest switch', async ({ page }) => {
+  await openKnown(page);
+  const section = page.locator('.e-slide-tools'), mode = page.locator('.e-mode');
+  await expect(section.locator('button')).toHaveCount(3);
+  await expect(section.locator('.e-do-add')).toBeVisible();
+  const left = await section.boundingBox(), right = await mode.boundingBox();
+  expect(left.x + left.width).toBeLessThanOrEqual(right.x);
+  expect(await section.evaluate(s => getComputedStyle(s).borderRightWidth)).toBe('1px');
+
+  // beside the buttons of a selection, as a section of its own; in Suggest it goes, line and all
+  await clickOn(page, `${CUR} h2`);
+  const tools = await page.locator('.e-tools').boundingBox();
+  expect(tools.x + tools.width).toBeLessThanOrEqual((await section.boundingBox()).x);
+  await page.locator('.e-mode-suggest').click();
+  await expect(section).toBeHidden();
+});
+
+test('words say what the sections of the toolbar are for, and they fit at 1024x768', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openKnown(page);
+  const label = page.locator('.e-tools .e-tools-label');
+  await expect(label).toBeHidden();
+  await expect(page.locator('.e-slide-tools .e-tools-label')).toHaveText('Slide');
+  await expect(page.locator('.e-do-add')).toHaveText('');
+  await expect(page.locator('.e-do-add')).toHaveAttribute('aria-label', 'New slide');
+  await expect(page.locator('.e-do-add svg')).toBeVisible();
+
+  await clickOn(page, `${CUR} h2`);
+  await expect(label).toHaveText('Selection');
+  await expect(label).toBeVisible();
+  const boxes = await page.locator('#edit-bar button:visible').evaluateAll(all => all.map(b => b.getBoundingClientRect()).map(r => [r.left, r.right]));
+  expect(boxes.length).toBeGreaterThan(0);
+  for (const [l, r] of boxes) {
+    expect(l).toBeGreaterThanOrEqual(0);
+    expect(r).toBeLessThanOrEqual(1024);
+  }
+  await page.keyboard.press('Escape');
+  await expect(label).toBeHidden();
+});
+
+test('the toolbar duplicates the current slide, as one edit to undo or remove', async ({ page }) => {
+  await fakeDialog(page);
+  await openOnly(page, `<section class="slide dark" id="a" data-auto="500">
+  <h2>A</h2>
+  <ul>
+    <li class="build">One</li>
+  </ul>
+  <div class="s-notes"><p>Say A</p></div>
+</section>
+
+<section class="slide">
+  <h2>B</h2>
+</section>`);
+  const copy = page.locator('.e-do-copy-slide');
+  await expect(copy).toHaveAttribute('aria-label', 'Duplicate slide');
+  await copy.click();
+  expect(await heads(page)).toEqual(['A', 'A', 'B']);
+  expect(await current(page)).toBe(1);
+  await expect(page.locator(`${CUR} .counter`)).toHaveText('2 / 3');
+  await expect(page.locator('.slide .counter')).toHaveText(['1 / 3', '2 / 3', '3 / 3']);
+  await expect(page.locator(CUR)).toHaveClass(/dark/);
+  await expect(page.locator(CUR)).toHaveAttribute('data-auto', '500');
+  await expect(page.locator(CUR)).not.toHaveAttribute('id');
+  await expect(page.locator('#notes')).toContainText('Say A');
+  await expect(rowsSaid(page)).toHaveText(['Duplicated slide']);
+  await expect(page.locator('.e-thumb')).toHaveCount(3);
+  await expect(thumbSlide(page, 1).locator('h2')).toHaveText('A');
+
+  // the copy is a slide of its own
+  await retype(page, '2');
+  expect(await heads(page)).toEqual(['A', 'A2', 'B']);
+
+  // written clean, each with its own markup
+  const saved = await save(page);
+  const stage = stageOf(saved);
+  expect(stage.match(/<li class="build">One<\/li>/g)).toHaveLength(2);
+  expect(stage.match(/id="a"/g)).toHaveLength(1);
+  expect(stage).not.toMatch(/ current|class="counter"| on"/);
+
+  // Undo takes back both, and × takes the edit made on the copy with it
+  await undoKey(page);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B']);
+  await page.locator('.e-thumb').nth(0).click();
+  await copy.click();
+  await retype(page, '3');
+  await expect(rowsSaid(page)).toContainText(['Undid: Duplicated slide', 'Duplicated slide']);
+  const made = page.locator('.e-change').filter({ has: page.locator('.e-note', { hasText: /^Duplicated slide$/ }) });
+  await pressRowX(made);
+  await expect(made.locator('.e-change-warn')).toContainText('Also removes 1 later edit');
+  await made.locator('.e-change-del').click();
+  expect(await heads(page)).toEqual(['A', 'B']);
+});
+
+test('a suggestion stays on the slide that was duplicated', async ({ page }) => {
+  await openKnown(page);
+  await page.locator('.e-mode-suggest').click();
+  await clickOn(page, `${CUR} li:nth-child(2)`);
+  await page.keyboard.type('Say it better');
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+  await page.locator('.e-do-copy-slide').click();
+  await expect(page.locator('.e-thumb').nth(0).locator('.e-thumb-count')).toHaveText('1');
+  await expect(page.locator('.e-thumb').nth(1).locator('.e-thumb-count')).toBeHidden();
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+});
+
+test('the toolbar deletes the current slide, unless it is the last one left', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  const drop = page.locator('.e-do-drop-slide');
+  await expect(drop).toHaveAttribute('aria-label', 'Delete slide');
+  await page.locator('.e-thumb').nth(1).click();
+  await drop.click();
+  expect(await heads(page)).toEqual(['A', 'C']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('C');
+  await expect(rowsSaid(page)).toHaveText(['Deleted slide']);
+  await drop.click();
+  expect(await heads(page)).toEqual(['A']);
+  await expect(page.locator(`${CUR} h2`)).toHaveText('A');
+  await expect(drop).toBeDisabled();
+  await undoKey(page);
+  await expect(drop).toBeEnabled();
+  expect(await heads(page)).toEqual(['A', 'C']);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C']);
+
+  // the element buttons and the slide buttons do different things
+  await clickOn(page, `${CUR} h2`);
+  await page.locator('.e-tools .e-do-delete').click();
+  expect(await page.locator('.slide').count()).toBe(3);
+  await expect(rowsSaid(page)).toHaveText(['Deleted']);
+});
+
+test('the menu of layouts shows a preview of each, loaded when it first opens', async ({ page }) => {
+  test.skip(!hasLayouts, 'this deck has no layouts');
+  await openKnown(page);
+  const menu = page.locator('#edit-layouts'), add = page.locator('.e-do-add');
+  const loaded = async () => {
+    const frames = page.frames().filter(f => f.url().includes('?view'));
+    const inMenu = await Promise.all(frames.map(async f => (await f.frameElement()).evaluate(e => !!e.closest('#edit-layouts'))));
+    return inMenu.filter(Boolean).length;
+  };
+  await expect(thumbSlide(page, 0).locator('h2')).toHaveText('Heading here');
+  expect(await loaded()).toBe(0);
+
+  await add.click();
+  const layouts = await layoutsIn(page);
+  await expect(menu.locator('button')).toHaveText(layouts.map(l => l.name));
+  for (const [k, { classes }] of layouts.entries()) {
+    await expect(previewOf(page, k)).toHaveClass(new RegExp(classes));
+    await expect(previewOf(page, k).locator('h1, h2').first()).toBeVisible();
+    await expect(menu.getByRole('button', { name: layouts[k].name, exact: true })).toBeVisible();
+  }
+  await expect.poll(loaded).toBe(layouts.length);
+
+  // hidden and shown again, it still fills its frame
+  const fills = async () => {
+    const frame = await menu.locator('iframe').first().boundingBox();
+    const stage = await page.frameLocator('#edit-layouts button:nth-child(1) iframe').locator('#stage').boundingBox();
+    return Math.abs(frame.width - stage.width) < 2 && Math.abs(frame.height - stage.height) < 2;
+  };
+  await expect.poll(fills).toBe(true);
+  await page.keyboard.press('Escape');
+  await add.click();
+  await expect.poll(fills).toBe(true);
+
+  // a click on the picture adds the layout, with no trace of it being a preview
+  const at = await current(page), b = await menu.locator('iframe').nth(1).boundingBox();
+  await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  await expect(menu).toBeHidden();
+  expect(await current(page)).toBe(at + 1);
+  expect(await page.locator(CUR).getAttribute('class')).toBe(layouts[1].classes + ' current');
+});
+
+test('the menu of layouts stays in the window at 1024x768', async ({ page }) => {
+  test.skip(!hasLayouts, 'this deck has no layouts');
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openKnown(page);
+  await clickOn(page, `${CUR} h2`);
+  await page.locator('.e-do-add').click();
+  const b = await page.locator('#edit-layouts').boundingBox();
+  expect(b.x).toBeGreaterThanOrEqual(0);
+  expect(b.x + b.width).toBeLessThanOrEqual(1024);
+  expect(b.y + b.height).toBeLessThanOrEqual(768);
+});
+
+// suggestions and slide edits together
+const FOUR = ['A', 'B', 'C', 'D'].map(h => `<section class="slide">\n  <h2>${h}</h2>\n  <p>Text ${h}</p>\n</section>`).join('\n\n');
+const counts = page => page.locator('.e-thumb-count').evaluateAll(all => all.map(c => c.hidden ? 0 : +c.textContent));
+// a suggestion on an element of the current slide, and back to Edit
+async function suggestOn(page, selector, note) {
+  await page.locator('.e-mode-suggest').click();
+  await clickOn(page, selector);
+  await page.keyboard.type(note);
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+}
+const rowSaying = (page, what) => page.locator('.e-change').filter({ has: page.locator('.e-note', { hasText: new RegExp(`^${what}$`) }) });
+
+test('a suggestion flagged as changed still goes with its slide', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await page.locator('.e-thumb').nth(1).click();
+  await suggestOn(page, `${CUR} h2`, 'Fix B');
+  await retype(page, '!');
+  await expect(page.locator('.e-changed')).toHaveCount(1);
+
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual(['A', 'C', 'D', 'B!']);
+  expect(await counts(page)).toEqual([0, 0, 0, 1]);
+  await expect(page.locator('.e-go')).toHaveText(/^Slide 4/);
+  await expect(page.locator('.e-changed')).toHaveCount(1);
+  await page.locator('.e-mode-suggest').click();
+  const prompt = await copied(page);
+  expect(prompt).toContain('## 1. Slide 4');
+  expect(prompt).toContain('section:nth-child(4)');
+  await page.locator('.e-mode-edit').click();
+
+  // a slide added or deleted before it shifts it too
+  await page.locator('.e-thumb').nth(0).click();
+  await newSlide(page);
+  expect(await counts(page)).toEqual([0, 0, 0, 0, 1]);
+  await deleteSlide(page, 0);
+  await deleteSlide(page, 0);
+  expect(await counts(page)).toEqual([0, 0, 1]);
+  await expect(page.locator('.e-changed')).toHaveCount(1);
+});
+
+test('a suggestion stays with the original when the original is edited after duplicating it', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await suggestOn(page, `${CUR} h2`, 'About A');
+  await page.locator('.e-do-copy-slide').click();
+  expect(await counts(page)).toEqual([1, 0, 0, 0, 0]);
+  await page.locator('.e-thumb').nth(0).click();
+  await retype(page, '!');
+  expect(await heads(page)).toEqual(['A!', 'A', 'B', 'C', 'D']);
+  expect(await counts(page)).toEqual([1, 0, 0, 0, 0]);
+  await expect(page.locator('.e-changed')).toHaveCount(1);
+  await undoKey(page);
+  expect(await counts(page)).toEqual([1, 0, 0, 0, 0]);
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+});
+
+test('a deleted slide does not hand its suggestions to one that looks the same, and Undo brings them back', async ({ page }) => {
+  await openOnly(page, ['one', 'two', 'three'].map(t => `<section class="slide">\n  <h2>Same</h2>\n  <p>On ${t}</p>\n</section>`).join('\n\n'));
+  await suggestOn(page, `${CUR} h2`, 'On the element');
+  // and one on the slide as a whole: a pin on its background
+  await page.locator('.e-mode-suggest').click();
+  const b = await page.locator(CUR).boundingBox();
+  await page.mouse.click(b.x + b.width - 30, b.y + 30);
+  await page.keyboard.type('On the slide');
+  await page.keyboard.press('Enter');
+  await page.locator('.e-mode-edit').click();
+  expect(await counts(page)).toEqual([2, 0, 0]);
+
+  await deleteSlide(page, 0);
+  await expect(page.locator('.e-changed')).toHaveCount(2);
+  await page.locator('.e-mode-suggest').click();
+  expect(await copied(page)).toContain('has changed since the suggestion was made');
+  await page.locator('.e-mode-edit').click();
+  await undoKey(page);
+  expect(await counts(page)).toEqual([2, 0, 0]);
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+});
+
+test('removing an added slide takes along what stood on it: copies, later slides and their edits', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await newSlide(page);
+  await page.locator('.e-do-copy-slide').click();
+  await retype(page, '!');
+  await expect(rowsSaid(page)).toHaveCount(3);
+  let added = rowSaying(page, 'Added slide');
+  await pressRowX(added);
+  await expect(added.locator('.e-change-warn')).toContainText('Also removes 2 later edits');
+  await added.locator('.e-change-del').click();
+  expect(await heads(page)).toEqual(['A', 'B', 'C', 'D']);
+  await expect(rowsSaid(page)).toHaveCount(0);
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+
+  await newSlide(page);
+  await newSlide(page);
+  await retype(page, '?');
+  added = rowSaying(page, 'Added slide').first();
+  await pressRowX(added);
+  await added.locator('.e-change-del').click();
+  await expect(rowsSaid(page)).toHaveCount(0);
+  expect(await heads(page)).toEqual(['A', 'B', 'C', 'D']);
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+});
+
+test('saved edits taken back and then restored are undone in their own order', async ({ page }) => {
+  await fakeDialog(page);
+  await openOnly(page, FOUR);
+  const undoTwice = async () => {
+    await undoKey(page);
+    await undoKey(page);
+    expect(await heads(page)).toEqual(['A', 'B', 'C', 'D']);
+  };
+  const check = async () => {
+    expect(await heads(page)).toEqual(['A', 'New slide!', 'B', 'C', 'D']);
+    await expect(rowsSaid(page)).toHaveCount(0);
+    // the last made goes first: the text, then the slide
+    await undoKey(page);
+    expect(await heads(page)).toEqual(['A', 'New slide', 'B', 'C', 'D']);
+    await expect(rowsSaid(page)).toHaveText(['Undid: Changed text']);
+    await undoKey(page);
+    expect(await heads(page)).toEqual(['A', 'B', 'C', 'D']);
+  };
+  await newSlide(page);
+  await retype(page, '!');
+  await save(page);
+  await undoTwice();
+
+  // by Clear
+  await clearEdits(page);
+  await check();
+
+  // by × on each, oldest first and newest first
+  for (const order of [['Undid: Changed text', 'Undid: Added slide'], ['Undid: Added slide', 'Undid: Changed text']]) {
+    await clearEdits(page);
+    await save(page);
+    await undoTwice();
+    for (const what of order) {
+      const row = rowSaying(page, what);
+      await pressRowX(row);
+    }
+    await check();
+  }
+});
+
+test('deleted suggestions brought back after a slide moved are on their own slide', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await page.locator('.e-thumb').nth(1).click();
+  await suggestOn(page, `${CUR} h2`, 'About B');
+  await page.locator('.e-mode-suggest').click();
+  await page.locator('.e-item').hover();
+  await page.locator('.e-del').click();
+  await page.locator('.e-mode-edit').click();
+  await page.locator('.e-thumb').nth(0).click();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  expect(await heads(page)).toEqual(['B', 'A', 'C', 'D']);
+  await page.locator('.e-mode-suggest').click();
+  await page.locator('.e-undo').click();
+  expect(await counts(page)).toEqual([1, 0, 0, 0]);
+  await expect(page.locator('.e-go')).toHaveText(/^Slide 1 · B/);
+  await expect(page.locator('.e-changed')).toHaveCount(0);
+});
+
+test('the row of an edit on a deleted slide selects nothing', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await page.locator('.e-thumb').nth(1).click();
+  await retype(page, '!');
+  await deleteSlide(page, 1);
+  const at = await current(page);
+  await rowSaying(page, 'Changed text').click();
+  expect(await current(page)).toBe(at);
+  await expect(page.locator('.e-sel')).toBeHidden();
+  await expect(page.locator('.e-tools')).toBeHidden();
+});
+
+test('Undo in Suggest takes back slide edits too, so they are not stranded there', async ({ page }) => {
+  await openOnly(page, FOUR);
+  await deleteSlide(page, 0);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await newSlide(page);
+  expect(await heads(page)).toEqual(['C', 'B', 'New slide', 'D']);
+  await page.locator('.e-mode-suggest').click();
+  await page.locator('.e-do-undo').click();
+  expect(await heads(page)).toEqual(['C', 'B', 'D']);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['B', 'C', 'D']);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A', 'B', 'C', 'D']);
+  await expect(page.locator('.e-thumb')).toHaveCount(4);
+  await expect(page.locator('.e-slide-tools')).toBeHidden();
+  await expect(page.locator('.e-do-undo')).toBeDisabled();
+});
+
+test('slide buttons and drags keep what is being typed in the slide or the notes', async ({ page }) => {
+  await openOnly(page, FOUR);
+  const typing = async () => {
+    await typeIn(page, `${CUR} h2`);
+    await page.keyboard.press('End');
+    await page.keyboard.type('!');
+  };
+  const inNotes = async () => {
+    await page.locator('#notes').click();
+    await page.keyboard.type('Said');
+  };
+  await typing();
+  await page.locator('.e-do-copy-slide').click();
+  expect(await heads(page)).toEqual(['A!', 'A!', 'B', 'C', 'D']);
+  await expect(rowsSaid(page)).toHaveText(['Changed text', 'Duplicated slide']);
+  await undoKey(page);
+  await undoKey(page);
+
+  await typing();
+  await page.locator('.e-do-drop-slide').click();
+  expect(await heads(page)).toEqual(['B', 'C', 'D']);
+  await undoKey(page);
+  expect(await heads(page)).toEqual(['A!', 'B', 'C', 'D']);
+  await undoKey(page);
+
+  await typing();
+  await page.locator('.e-do-add').click();
+  await expect(page.locator(`${CUR} h2`)).not.toHaveAttribute('contenteditable');
+  await page.keyboard.press('Escape');
+  expect(await heads(page)).toEqual(['A!', 'B', 'C', 'D']);
+  await undoKey(page);
+
+  await typing();
+  await dragThumb(page, 0, 1, 'bottom');
+  expect(await heads(page)).toEqual(['B', 'A!', 'C', 'D']);
+  await undoKey(page);
+  await undoKey(page);
+
+  await inNotes();
+  await page.locator('.e-do-copy-slide').click();
+  await expect(page.locator('.slide').nth(0).locator('.s-notes')).toContainText('Said');
+  await expect(page.locator('.slide').nth(1).locator('.s-notes')).toContainText('Said');
+  await undoKey(page);
+  await undoKey(page);
+
+  await inNotes();
+  await page.locator('.e-do-drop-slide').click();
+  await undoKey(page);
+  await expect(page.locator('.slide').nth(0).locator('.s-notes')).toContainText('Said');
+});
+
+test('an open presenter window follows slide edits by position, without errors', async ({ page }) => {
+  await openOnly(page, LABELLED);
+  const [pv] = await Promise.all([page.waitForEvent('popup'), page.locator('.e-present').click()]);
+  const errors = [];
+  pv.on('pageerror', e => errors.push(e.message));
+  await pv.route(/^https?:/, r => r.abort());
+  const count = pv.locator('.p-count');
+  await expect(count).toHaveText('Slide 1 of 3');
+
+  await newSlide(page);
+  await expect(count).toHaveText('Slide 2 of 3');
+  // past the slides of the file it opened with: as far as it goes
+  await page.locator('.e-thumb').nth(3).click();
+  await expect(count).toHaveText('Slide 3 of 3');
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await expect(count).toHaveText('Slide 3 of 3');
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await expect(count).toHaveText('Slide 2 of 3');
+  await deleteSlide(page, 0);
+  await expect(count).toHaveText('Slide 1 of 3');
+  // and it still steers the deck
+  await pv.keyboard.press('ArrowDown');
+  await expect.poll(() => current(page)).toBe(1);
+  await expect(pv.frameLocator('.p-slide iframe').locator('.slide.current')).toBeVisible();
+  expect(errors).toEqual([]);
 });

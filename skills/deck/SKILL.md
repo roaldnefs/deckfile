@@ -44,7 +44,7 @@ Get the user's go-ahead on the outline. Restructuring an outline is cheap; restr
 
 1. Copy `assets/template.html` to `<slug>/index.html`, where `<slug>` is a short kebab-case name for the talk. Do not overwrite an existing deck without asking.
 2. Set `<html lang>` and `<title>`.
-3. Delete every example `<section>` between `<div id="stage">` and its closing `</div>`. Write the new slides there, using markup from `references/components.md`.
+3. Delete every example `<section>` between `<div id="stage">` and its closing `</div>`. Write the new slides there, using markup from `references/components.md`. Keep `<template data-deck="layouts">` before the stage, as the edit view's **New slide** offers those layouts.
 4. Brand (if any): change the tokens in `:root` of `<style data-deck="theme">` and the Google Fonts `<link>`, as described in `references/theming.md`. Deck-specific CSS goes in the last `<style>`, under `/* deck-specific */`.
 5. Copy images the user supplied next to `index.html` and reference them by relative path.
 
@@ -74,7 +74,7 @@ If you can run a headless browser, render the deck and look at it: print it to P
 
 Tell the user:
 - The path to the deck, and how to open it (open `index.html` in any browser).
-- How to present: `→`/`Space` next, `←` back, `↓`/`↑` whole slide, `F` fullscreen, `P` print to PDF, `S` presenter view in a second window with notes and a timer, `E` edit view to change text and elements and save the file, or to suggest changes and copy them as one prompt.
+- How to present: `→`/`Space` next, `←` back, `↓`/`↑` whole slide, `F` fullscreen, `P` print to PDF, `S` presenter view in a second window with notes and a timer, `E` edit view to change text and elements, add, duplicate, reorder and delete slides and save the file, or to suggest changes and copy them as one prompt.
 - Which content is marked illustrative and needs real numbers.
 - Any assumptions you made in the brief.
 

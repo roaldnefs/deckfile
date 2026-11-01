@@ -36,6 +36,16 @@ test('the template shows everything in the theme: no class is left without a sli
   assert.deepEqual([...classes].filter(c => !used.has(c)), []);
 });
 
+test('the template offers its layouts, built from what the theme has', () => {
+  const block = read('template.html').match(/<template data-deck="layouts">\n([\s\S]*?)<\/template>/);
+  assert.ok(block, 'no <template data-deck="layouts"> block');
+  assert.deepEqual([...block[1].matchAll(/data-layout="([^"]*)"/g)].map(m => m[1]), ['Title', 'Content', 'Two columns', 'Section']);
+  const css = read('src/theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const theme = new Set([...css.matchAll(/([^{}]+)\{/g)].flatMap(m => [...m[1].matchAll(/\.([a-zA-Z][\w-]*)/g)].map(c => c[1])));
+  const missing = [...block[1].matchAll(/class="([^"]*)"/g)].flatMap(m => m[1].split(/\s+/)).filter(c => !theme.has(c));
+  assert.deepEqual(missing, []);
+});
+
 test('the engine can be inlined: no closing tag or comment opening inside it', () => {
   assert.doesNotMatch(read('src/deck.js'), /<\/script|<!--/i);
   assert.doesNotMatch(read('src/deck.css'), /<\/style/i);

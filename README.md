@@ -9,9 +9,10 @@ same from any static host. [See the live demo](https://roaldnefs.github.io/deckf
 - builds, one step at a time or timed
 - a presenter view in a second window, with speaker notes and a timer
 - print to PDF with one page per slide
-- an edit view like PowerPoint's: change text and elements on the slide and save
-  the file, or suggest changes and copy them as one prompt for a coding agent
-- about 1,500 lines of plain JavaScript and 50 of CSS, readable in the file itself
+- an edit view like PowerPoint's: change text and elements, add, duplicate, reorder and delete
+  slides, and save the file, or suggest changes and copy them as one prompt for a
+  coding agent
+- about 1,700 lines of plain JavaScript and 50 of CSS, readable in the file itself
 
 <p>
   <img src="docs/presenter-view.png" width="49%" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right">
@@ -68,6 +69,7 @@ talk with `postMessage`, which also works between pages opened from `file://`.
 | `S` | presenter view in a second window |
 | `E` | edit view, see [Editing and suggesting](#editing-and-suggesting) |
 | `N` / `Esc` | in the edit view: fold the notes pane / drop the selection, or else leave the view |
+| `Cmd/Ctrl+↑` / `↓` | in the edit view: move the current slide earlier / later |
 | click / tap / swipe | left 30 % of the screen back, the rest forward; swipe left / right on touch |
 | pointer near the bottom-left corner | buttons for back, the presenter view, the edit view, the shortcuts and forward |
 
@@ -139,11 +141,25 @@ this tab. Pressing a suggestion's mark in Edit goes to Suggest.
   its text instead.
 - Type in the notes pane to change the notes of the slide. Notes you empty are
   removed.
-- The side pane lists every edit not saved yet, by slide. Click one to go there
-  and select its element.
+- **New slide** in the toolbar opens a menu with a preview of each layout: Title,
+  Content, Two columns and Section. The one you click is added after the current slide, with text to
+  type over. The layouts are `<section>`s in the deck's
+  `<template data-deck="layouts">`, each named by `data-layout`, so you can change
+  them or add your own. Keep them to text: a terminal panel or an image can't be
+  filled in from the edit view. With one layout the button adds it at once, and a
+  deck without the block gets a plain slide.
+- **Duplicate slide** in the toolbar adds a copy after the current slide, with its
+  notes and builds. **Delete slide** deletes the current slide, and hovering a
+  thumbnail gives × to delete that one; the last slide left can't be deleted.
+- Drag a thumbnail to move its slide, or press `Cmd/Ctrl+↑` or `↓` to move the
+  current one. A slide's comment in the source moves and goes with it; a copy has
+  no comment.
+- The side pane lists every edit not saved yet, by slide, with those of deleted
+  slides first. Click one to go there and select its element.
   Hover one for × to remove just that edit: later edits stay, on the same elements.
   A later one goes with it only if it can't stand without it, such as text typed in
-  a copy whose duplication is removed, or text retyped over the text being removed.
+  a copy whose duplication is removed, text retyped over the text being removed, or
+  edits on a slide whose adding or duplication is removed.
   × asks for a second click then.
   **Clear**, clicked twice, removes them all. Removing can't itself be undone.
 - **Undo** or `Cmd/Ctrl+Z` takes back one change at a time, on any slide. An edit
@@ -169,7 +185,9 @@ this tab. Pressing a suggestion's mark in Edit goes to Suggest.
   frame, and the element it is on, with a selector and its text.
 - When the deck has changed, a suggestion follows its element to where it is now.
   If that element has changed or no single match exists, the suggestion is
-  labelled **Changed**, and the prompt says so.
+  labelled **Changed**, and the prompt says so. While the deck is open it stays
+  with its slide, also when another slide looks the same, and is labelled
+  **Changed** while its slide is deleted.
 - **Copy prompt**, at the bottom of the suggestions, puts every suggestion on the
   clipboard as one Markdown prompt that names the deck file, ready to paste into
   Claude Code or another coding agent working on the deck.
@@ -221,6 +239,9 @@ This replaces only what is inside the engine tags. The theme, the slides and
 your own scripts stay as they are. `update --check` writes nothing and exits 1
 when a deck is out of date, for use in CI. From a clone, run
 `node bin/deckfile.mjs update …` instead.
+
+An update leaves `<template data-deck="layouts">` alone too. A deck from before it
+existed adds plain slides until you copy the block from `template.html`.
 
 If you'd rather not inline the engine, link it. A plain script works from
 `file://`:
@@ -277,15 +298,19 @@ The automated tests run in Chromium. Firefox and Safari are not tested yet.
 - The browser is the only source a saved file can come from, so the first save
   rewrites some markup the same way the browser reads it: self-closed SVG tags,
   `<tbody>` in tables, entities, `&` in links, empty attributes. Comments and
-  indentation stay, and later saves change only what you changed.
+  indentation stay, and later saves change only what you changed. A number in a
+  comment, such as `<!-- 2 · … -->`, is not updated when slides move.
 - Saving keeps whatever else is in the page: changes made by a deck's own script,
   or by a browser extension, end up in the file. Undo replaces a slide's elements,
   so such a script loses hold of what it found before.
 - A deck saved to another folder loses the photos beside it, as their paths are
   relative. An open presenter window shows the file as it was: reopen it after
-  saving.
+  saving. Until then it follows the deck by position, so after adding, moving or
+  deleting slides it can show a different slide from the deck window.
 - The edit view's side panes have a fixed width. In a small window, fold them away
   with the buttons in its status bar.
+- Dragging thumbnails needs a mouse or trackpad: touch screens can't drag them, and
+  the keyboard shortcut is the other way to reorder.
 - Photos sit beside the file, so a deck with photos travels as a folder.
 
 ## Development

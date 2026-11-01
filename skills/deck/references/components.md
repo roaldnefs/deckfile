@@ -126,6 +126,21 @@ A common pattern is a photo beside text:
 
 If a layout repeats more than once, give it a class under `/* deck-specific */` instead of inline styles.
 
+## Layouts for New slide
+
+`<template data-deck="layouts">`, just before `<div id="stage">`, holds what **New slide** offers in the edit view:
+
+```html
+<section class="slide" data-layout="Content">   <!-- the name in the menu -->
+  <h2>New slide</h2>
+  <ul>
+    <li>First point</li>
+  </ul>
+</section>
+```
+
+Use placeholder text only, in elements that can be typed in. Leave out terminal panels and images, which can't be filled in from the edit view.
+
 ## Speaker notes
 
 ```html

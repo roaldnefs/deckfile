@@ -481,11 +481,11 @@ test.describe('slide view', () => {
     expect(before.equals(await page.screenshot())).toBe(true);
   });
 
-  test('the dark title card animates, except in the edit view, for reduced motion and in print', async ({ page }) => {
-    const title = page.locator('.slide.dark.title');
-    test.skip(!await title.count(), 'this deck has no dark title card');
+  test('the title card animates, except in the edit view, for reduced motion and in print', async ({ page }) => {
+    const title = page.locator('.slide.title h1');
+    test.skip(!await title.count(), 'this deck has no title card');
     const name = () => title.evaluate(s => getComputedStyle(s).animationName);
-    await expect.poll(name).toBe('drift');
+    await expect.poll(name).toBe('rise');
     await page.keyboard.press('e');
     await expect.poll(name).toBe('none');
     await page.keyboard.press('e');
@@ -926,7 +926,7 @@ test.describe('suggest', () => {
   test('two elements that both match are flagged, not guessed', async ({ page }) => {
     await openSuggest(page);
     await suggest(page, HEADING, 'Shorter');
-    await reopenChanged(page, html => firstSlide(html, `<section class="slide"><p>A copy</p>${html.match(FIRST_H1)[0]}</section>\n`));
+    await reopenChanged(page, html => firstSlide(html, `<section class="slide"><div><p>A copy</p>${html.match(FIRST_H1)[0]}</div></section>\n`));
     await expect(page.locator('.e-changed')).toHaveCount(1);
   });
 

@@ -339,21 +339,21 @@
     const css = document.createElement('style');
     css.textContent = `
       @media screen{
-        html.presenter,html.presenter body{background:#1C1C1E}
+        html.presenter,html.presenter body{background:#111110}
         html.presenter #stage{display:none}
         /* timer on top, current slide left, next slide above the notes right */
         #presenter{position:fixed;inset:0;box-sizing:border-box;padding:12px 20px 16px;display:grid;row-gap:12px;
           grid-template:"top top top" auto "cur vbar side" minmax(0,1fr) / minmax(0,var(--cur-w,62%)) 20px minmax(0,1fr);
-          color:#F5F5F7;font:400 15px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          color:#F2F2EF;font:400 15px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         #presenter [hidden]{display:none!important}
         .p-top{grid-area:top;display:flex;align-items:center;gap:8px}
-        html.presenter #timer{position:static;padding:0 8px 0 0;background:none;border:0;color:#F5F5F7;
-          font:500 28px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-        .p-link{padding:5px 12px;border-radius:999px;background:rgba(255,69,58,.18);color:#FF6961;font-size:13px;font-weight:500}
-        .p-clock{margin-left:auto;color:#98989D;font:500 20px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-        #presenter button{display:grid;place-items:center;padding:0;border:0;background:rgba(255,255,255,.1);color:#F5F5F7;cursor:pointer}
+        html.presenter #timer{position:static;padding:0 8px 0 0;background:none;border:0;color:#F2F2EF;
+          font:500 26px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+        .p-link{padding:5px 10px;border-radius:3px;background:rgba(255,69,58,.18);color:#FF6961;font-size:13px;font-weight:500}
+        .p-clock{margin-left:auto;color:#8F8F8A;font:500 16px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+        #presenter button{display:grid;place-items:center;padding:0;border:0;background:rgba(255,255,255,.1);color:#F2F2EF;cursor:pointer}
         #presenter button:hover{background:rgba(255,255,255,.18)}
-        .p-pause,.p-reset{width:30px;height:30px;border-radius:50%}
+        .p-pause,.p-reset{width:30px;height:30px;border-radius:3px}
         .p-pause svg{fill:currentColor}
         .p-vbar{grid-area:vbar;cursor:col-resize}
         .p-hbar{flex:none;height:20px;cursor:row-resize}
@@ -366,27 +366,27 @@
         .p-hbar:hover::after,.p-hbar.p-drag::after{top:8px;height:4px;background:rgba(255,255,255,.35)}
         /* a slide pane holds the largest 16:9 slide that fits */
         .p-slide,.p-next{container-type:size;display:grid;place-items:center}
-        #presenter iframe{display:block;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;border:0;border-radius:10px;background:#000;pointer-events:none}
+        #presenter iframe{display:block;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;border:0;border-radius:3px;background:#000;pointer-events:none}
         .p-cur{grid-area:cur;display:flex;flex-direction:column;gap:12px;min-height:0}
         .p-slide{flex:1;min-height:0}
         .p-nav{flex:none;display:flex;align-items:center;justify-content:center;gap:16px}
-        /* previous, the count and next in one capsule */
-        .p-ctl{display:flex;align-items:center;gap:8px;padding:4px;border-radius:999px;background:#2C2C2E}
-        #presenter .p-ctl button{width:36px;height:36px;border-radius:50%;background:none}
+        /* previous, the count and next in one outlined bar */
+        .p-ctl{display:flex;align-items:center;gap:8px;padding:3px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+        #presenter .p-ctl button{width:34px;height:34px;border-radius:2px;background:none}
         #presenter .p-ctl button:hover{background:rgba(255,255,255,.12)}
-        .p-count{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
-        .p-left{color:#98989D;font-size:13px}
+        .p-count{font:500 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+        .p-left{color:#8F8F8A;font-size:13px}
         .p-side{grid-area:side;display:flex;flex-direction:column;min-width:0;min-height:0}
-        .p-label{flex:none;margin-bottom:8px;font-size:13px;font-weight:500;color:#98989D}
+        .p-label{flex:none;margin-bottom:8px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8F8F8A}
         .p-next{position:relative;flex:none;width:100%;aspect-ratio:16/9}
         #presenter.sized .p-next{flex:0 1 var(--next-h);min-height:80px;aspect-ratio:auto}
-        .p-end{position:absolute;inset:0;display:grid;place-items:center;border-radius:10px;background:#000;color:#98989D}
+        .p-end{position:absolute;inset:0;display:grid;place-items:center;border-radius:3px;background:#000;color:#8F8F8A}
         .p-notes{flex:1;position:relative;min-height:80px}
-        html.presenter #notes{position:absolute;inset:0;max-height:none;overflow:auto;padding:16px 20px;border:0;border-radius:10px;
-          background:#2C2C2E;color:#F5F5F7;font:400 24px/1.5 system-ui,sans-serif}
-        html.presenter #notes::before{margin-bottom:10px;font:500 13px/1 system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#98989D}
+        html.presenter #notes{position:absolute;inset:0;max-height:none;overflow:auto;padding:16px 20px;border:0;border-radius:3px;
+          background:#1C1C1A;color:#F2F2EF;font:400 24px/1.5 system-ui,sans-serif}
+        html.presenter #notes::before{margin-bottom:12px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8F8F8A}
         .p-size{position:absolute;top:10px;right:12px;z-index:11;display:flex;gap:4px}
-        #presenter .p-size button{padding:5px 9px;border-radius:7px;font:500 13px/1 system-ui,sans-serif}
+        #presenter .p-size button{padding:5px 8px;border-radius:3px;font:500 12px/1 system-ui,sans-serif}
       }
       @media print{#presenter{display:none}}`;
     document.head.append(css);
@@ -506,8 +506,8 @@
     return `
       @media screen{
         #edit,#edit-bar,#edit-rail,#edit-status,#edit-layer,#edit-layouts{display:none}
-        html.editing,html.editing body{background:#F5F5F7}
-        html.editing #stage{left:var(--edit-x);top:var(--edit-y);box-shadow:0 calc(4px / var(--scale)) calc(30px / var(--scale)) rgba(0,0,0,.14)}
+        html.editing,html.editing body{background:#EFEFEC}
+        html.editing #stage{left:var(--edit-x);top:var(--edit-y);box-shadow:0 0 0 calc(1px / var(--scale)) rgba(0,0,0,.16)}
         /* nothing moves here: outlines are measured from what is on the slide */
         html.editing .build{transition:none}
         html.editing .slide,html.editing .slide *{animation:none!important}
@@ -515,11 +515,11 @@
         /* marks sit in the scaled slide; dividing by --scale keeps their lines and numbers one size on screen.
            A thin dark edge keeps the orange visible on any slide */
         .e-mark{position:absolute;pointer-events:none}
-        .e-mark span{position:absolute;left:0;bottom:100%;width:30px;height:30px;display:grid;place-items:center;
-          border-radius:50% 50% 50% 0;background:radial-gradient(circle,#fff 0 11px,#007AFF 11.5px);color:#1D1D1F;
-          font:600 11px/1 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:scale(calc(1 / var(--scale)));
+        .e-mark span{position:absolute;left:0;bottom:100%;width:28px;height:22px;display:grid;place-items:center;
+          border-radius:2px 2px 2px 0;background:#007AFF;color:#fff;
+          font:600 11px/1 system-ui,sans-serif;box-shadow:0 0 0 1px rgba(0,0,0,.25);transform:scale(calc(1 / var(--scale)));
           transform-origin:0 100%;pointer-events:auto;cursor:pointer}
-        .e-box,.e-hover,.e-sel{box-sizing:border-box;border:calc(2px / var(--scale)) solid #FF9500;border-radius:calc(4px / var(--scale));
+        .e-box,.e-hover,.e-sel{box-sizing:border-box;border:calc(2px / var(--scale)) solid #FF9500;border-radius:calc(2px / var(--scale));
           box-shadow:0 0 0 calc(1px / var(--scale)) rgba(0,0,0,.25)}
         .e-sel{border-color:#007AFF}
         /* the text being typed in */
@@ -529,109 +529,107 @@
         .e-mark.e-lit span{transform:scale(calc(1.2 / var(--scale)))}
         /* its element is gone or changed */
         .e-box.e-stale{border-style:dashed;border-color:#8E8E93}
-        .e-mark.e-stale span{background:radial-gradient(circle,#fff 0 11px,#8E8E93 11.5px)}
+        .e-mark.e-stale span{background:#8E8E93}
         /* the panes use the system font, whatever the deck's fonts are */
         html.editing #edit-bar,html.editing #edit-rail,html.editing #edit,html.editing #edit-status{position:fixed;z-index:20;box-sizing:border-box;
-          color:#1D1D1F;font:400 13px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          color:#111110;font:400 13px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         html.editing #edit-bar{top:0;left:0;right:0;height:${BAR_H}px;display:flex;align-items:center;gap:4px;padding:0 12px 0 16px;
-          background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
-          border-bottom:1px solid rgba(0,0,0,.1)}
+          background:#fff;border-bottom:1px solid rgba(0,0,0,.14)}
         .e-name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
         #edit-bar button,.e-foot button,#edit-status button{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;min-width:30px;
-          padding:0 7px;border:0;border-radius:8px;background:none;color:#1D1D1F;font:500 13px/1 system-ui,sans-serif;cursor:pointer}
+          padding:0 7px;border:0;border-radius:3px;background:none;color:#111110;font:500 13px/1 system-ui,sans-serif;cursor:pointer}
         #edit-bar button:hover,.e-foot button:hover,#edit-status button:hover{background:rgba(0,0,0,.06)}
         .e-show svg{fill:currentColor}
         /* what New slide can add, under its button */
-        html.editing #edit-layouts{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,160px);gap:4px;box-sizing:border-box;padding:6px;border-radius:14px;
-          background:rgba(255,255,255,.9);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:#1D1D1F;
-          box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 8px 28px rgba(0,0,0,.2);font:500 13px/1 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-        #edit-layouts button{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+        html.editing #edit-layouts{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,160px);gap:4px;box-sizing:border-box;padding:6px;border-radius:4px;
+          background:#fff;color:#111110;
+          box-shadow:0 0 0 1px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.12);font:500 13px/1 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        #edit-layouts button{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:3px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
         #edit-layouts button:hover{background:rgba(0,0,0,.06)}
         .e-tools,.e-ask-tools,.e-slide-tools{display:flex;align-items:center;gap:2px;margin-right:8px;padding-right:8px;border-right:1px solid rgba(0,0,0,.1)}
-        .e-tools-label{margin:0 6px;color:#6E6E73;font-size:12px}
-        .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:9px;background:rgba(0,0,0,.06)}
+        .e-tools-label{margin:0 6px;color:#6B6B66;font:500 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+        .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
         #edit-bar .e-mode button{height:26px}
-        #edit-bar .e-mode button[aria-pressed=true]{background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.14)}
+        #edit-bar .e-mode button[aria-pressed=true]{background:#111110;color:#fff}
         #edit-bar button:disabled,.e-foot button:disabled{opacity:.4;pointer-events:none}
         html.editing #edit-rail{display:block;top:${BAR_H}px;left:0;bottom:${STATUS_H}px;width:${RAIL_W}px;overflow:auto;padding:12px 14px 12px 6px;
-          background:#FBFBFD;border-right:1px solid rgba(0,0,0,.1)}
+          background:#FAFAF8;border-right:1px solid rgba(0,0,0,.1)}
         .e-thumb{position:relative;display:grid;grid-template-columns:22px 1fr;align-items:start;margin-bottom:12px;cursor:pointer}
-        .e-thumb-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;box-sizing:border-box;padding:0 5px;border-radius:9px;background:#007AFF;
+        .e-thumb-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;box-sizing:border-box;padding:0 5px;border-radius:2px;background:#111110;
           color:#fff;font:600 11px/18px system-ui,sans-serif;text-align:center;font-variant-numeric:tabular-nums}
-        .e-thumb-n{padding:1px 7px 0 0;color:#6E6E73;font-size:11px;font-variant-numeric:tabular-nums;text-align:right}
-        .e-thumb-frame{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1)}
-        .e-thumb:hover .e-thumb-frame{box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-        .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2.5px #007AFF}
-        .e-thumb.e-cur .e-thumb-n{color:#1D1D1F;font-weight:600}
+        .e-thumb-n{padding:2px 7px 0 0;color:#6B6B66;font:400 10px/1.4 system-ui,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+        .e-thumb-frame{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.14)}
+        .e-thumb:hover .e-thumb-frame{box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+        .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2px #111110}
+        .e-thumb.e-cur .e-thumb-n{color:#111110;font-weight:600}
         .e-thumb iframe,#edit-layouts iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
-        .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:50%;
-          background:rgba(255,255,255,.9);color:#1D1D1F;box-shadow:0 0 0 .5px rgba(0,0,0,.2);cursor:pointer;opacity:0}
+        .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:2px;
+          background:#fff;color:#111110;box-shadow:0 0 0 1px rgba(0,0,0,.2);cursor:pointer;opacity:0}
         /* the count of suggestions has the corner */
         .e-thumb-count:not([hidden])~.e-thumb-del{right:18px}
         .e-thumb:hover .e-thumb-del{opacity:1}
-        .e-thumb-del:hover{background:#fff}
+        .e-thumb-del:hover{background:#111110;color:#fff}
         #edit-rail:is(.e-suggest,.e-one) .e-thumb-del{display:none}
         /* where a dragged thumbnail will land: in the gap above this one, or below the last */
-        .e-drop::before,.e-drop-end::after{content:"";position:absolute;left:22px;right:0;height:3px;border-radius:2px;background:#007AFF}
+        .e-drop::before,.e-drop-end::after{content:"";position:absolute;left:22px;right:0;height:2px;background:#111110}
         .e-drop::before{top:-8px}
         .e-drop-end::after{bottom:-8px}
         html.editing #notes{position:fixed;z-index:10;left:var(--edit-rail);right:var(--edit-pane);bottom:${STATUS_H}px;height:${NOTES_H}px;max-height:none;box-sizing:border-box;
-          padding:12px 20px;background:#fff;color:#1D1D1F;border-top:1px solid rgba(0,0,0,.1);font:400 13px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          padding:12px 20px;background:#fff;color:#111110;border-top:1px solid rgba(0,0,0,.1);font:400 13px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         html.editing #notes[contenteditable=true]{outline:none;cursor:text}
-        html.editing #notes::before{margin-bottom:8px;font:600 12px/1 system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#6E6E73}
+        html.editing #notes::before{margin-bottom:10px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6B6B66}
         html.editing #edit-status{left:0;right:0;bottom:0;height:${STATUS_H}px;display:flex;align-items:center;justify-content:space-between;
-          padding:0 6px 0 16px;background:#F5F5F7;border-top:1px solid rgba(0,0,0,.1);color:#6E6E73;font-size:12px}
-        #edit-status button{height:24px;min-width:24px;padding:0 4px;color:#6E6E73}
+          padding:0 6px 0 16px;background:#EFEFEC;border-top:1px solid rgba(0,0,0,.1);color:#6B6B66;font-size:12px}
+        #edit-status button{height:24px;min-width:24px;padding:0 4px;color:#6B6B66}
         #edit-status button[aria-pressed=false]{color:#AEAEB2}
         .e-status-buttons{display:flex;gap:2px}
         html.editing #edit{top:${BAR_H}px;right:0;bottom:${STATUS_H}px;width:${PANE_W}px;display:flex;flex-direction:column;
-          background:#FBFBFD;border-left:1px solid rgba(0,0,0,.1)}
+          background:#FAFAF8;border-left:1px solid rgba(0,0,0,.1)}
         .e-pane{flex:1;min-height:0;display:flex;flex-direction:column}
-        .e-head{flex:none;display:flex;align-items:center;gap:6px;padding:14px 16px 10px;font-weight:600}
-        .e-head svg{color:#6E6E73}
-        .e-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 28px;color:#6E6E73;text-align:center}
+        .e-head{flex:none;display:flex;align-items:center;gap:8px;padding:14px 16px 12px;border-bottom:1px solid rgba(0,0,0,.1);font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+        .e-head svg{color:#6B6B66}
+        .e-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 28px;color:#6B6B66;text-align:center}
         .e-list{flex:1;min-height:0;overflow:auto;padding-bottom:8px}
         /* one label per slide, then its suggestions as rows: click one to edit it, remove on hover */
         .e-go,.e-slide{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px 16px 4px;border:0;border-top:1px solid rgba(0,0,0,.08);
-          background:none;color:#6E6E73;font:600 12px/1.4 system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;
+          background:none;color:#6B6B66;font:600 12px/1.4 system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;
           text-overflow:ellipsis;cursor:pointer}
         .e-go:first-child,.e-slide:first-child{margin-top:0;border-top:0}
-        .e-go:hover,.e-go.e-cur,.e-slide:hover,.e-slide.e-cur{color:#1D1D1F}
-        .e-change{position:relative;margin:0 8px;padding:8px 32px 8px 8px;border-radius:8px;cursor:pointer}
+        .e-go:hover,.e-go.e-cur,.e-slide:hover,.e-slide.e-cur{color:#111110}
+        .e-change{position:relative;margin:0 8px;padding:8px 32px 8px 8px;border-radius:3px;cursor:pointer}
         .e-change:hover{background:rgba(0,0,0,.05)}
         .e-change-warn{color:#C93400;font-size:12px}
-        .e-item{position:relative;display:grid;grid-template-columns:26px 1fr;margin:0 8px;padding:8px 32px 8px 8px;border-radius:8px;cursor:pointer}
+        .e-item{position:relative;display:grid;grid-template-columns:26px 1fr;margin:0 8px;padding:8px 32px 8px 8px;border-radius:3px;cursor:pointer}
         .e-item:hover,.e-item.e-lit{background:rgba(0,0,0,.05)}
-        .e-n{grid-row:1/3;font:600 12px/1.6 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#AEAEB2}
+        .e-n{grid-row:1/3;font:600 11px/1.7 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#AEAEB2}
         .e-cur .e-n{color:#007AFF}
         .e-note{white-space:pre-wrap;overflow-wrap:anywhere}
-        .e-note:empty::before{content:"Describe the change";color:#6E6E73}
-        .e-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6E6E73;font-size:12px}
-        .e-del,.e-change-del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;
-          color:#6E6E73;cursor:pointer;opacity:0}
+        .e-note:empty::before{content:"Describe the change";color:#6B6B66}
+        .e-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6B6B66;font-size:12px}
+        .e-del,.e-change-del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:0;border-radius:2px;background:none;
+          color:#6B6B66;cursor:pointer;opacity:0}
         .e-item:hover .e-del,.e-change:hover .e-change-del,.e-change-del.e-armed{opacity:1}
-        .e-del:hover,.e-change-del:hover{background:rgba(0,0,0,.08);color:#1D1D1F}
-        .e-changed{margin-right:6px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.07);color:#3A3A3C;font-weight:500}
+        .e-del:hover,.e-change-del:hover{background:rgba(0,0,0,.08);color:#111110}
+        .e-changed{margin-right:6px;padding:1px 6px;border-radius:2px;background:rgba(0,0,0,.07);color:#3A3A3C;font-weight:500}
         .e-foot{flex:none;display:flex;padding:8px 10px;border-top:1px solid rgba(0,0,0,.1)}
         .e-foot .e-clear,.e-foot .e-clear-edits{margin-left:auto}
-        .e-foot .e-copy{padding:0 12px;background:#007AFF;color:#fff}
-        .e-foot .e-copy:hover{background:#0068D9}
+        .e-foot .e-copy{padding:0 12px;background:#111110;color:#fff}
+        .e-foot .e-copy:hover{background:#3A3A37}
         /* the box that opens beside a selection: what it is about, the field, delete and save */
-        #edit-ask{position:fixed;z-index:30;width:380px;box-sizing:border-box;padding:12px 14px 10px;border-radius:14px;background:rgba(255,255,255,.9);
-          -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:#1D1D1F;
-          box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 16px 48px rgba(0,0,0,.28);font:400 14px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-        .e-ask-path{overflow:hidden;white-space:pre;text-overflow:ellipsis;color:#6E6E73;font-size:12px}
+        #edit-ask{position:fixed;z-index:30;width:380px;box-sizing:border-box;padding:12px 14px 10px;border-radius:4px;background:#fff;color:#111110;
+          box-shadow:0 0 0 1px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.16);font:400 14px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        .e-ask-path{overflow:hidden;white-space:pre;text-overflow:ellipsis;color:#6B6B66;font-size:12px}
         .e-crumb{padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
         .e-crumb:hover{color:#007AFF}
-        .e-crumb.e-at{color:#1D1D1F;font-weight:600}
+        .e-crumb.e-at{color:#111110;font-weight:600}
         #edit-ask textarea{display:block;width:100%;max-height:180px;box-sizing:border-box;margin:8px 0 6px;padding:2px 0;border:0;outline:none;
-          background:none;color:#1D1D1F;font:inherit;resize:none}
-        #edit-ask textarea::placeholder{color:#6E6E73}
+          background:none;color:#111110;font:inherit;resize:none}
+        #edit-ask textarea::placeholder{color:#6B6B66}
         .e-ask-foot{display:flex;justify-content:flex-end;align-items:center;gap:6px}
-        .e-ask-foot button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;cursor:pointer}
-        .e-ask-del{background:none;color:#6E6E73}
-        .e-ask-del:hover{background:rgba(0,0,0,.06);color:#1D1D1F}
-        .e-ask-send{background:#007AFF;color:#fff}
+        .e-ask-foot button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:3px;cursor:pointer}
+        .e-ask-del{background:none;color:#6B6B66}
+        .e-ask-del:hover{background:rgba(0,0,0,.06);color:#111110}
+        .e-ask-send{background:#111110;color:#fff}
         #edit-ask .e-ask-send:disabled{background:#D1D1D6;cursor:default}
       }
       @media print{#edit,#edit-bar,#edit-rail,#edit-status,#edit-layer,#edit-ask,#edit-layouts{display:none}}`;

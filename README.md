@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/icon.svg" width="128" height="128" alt="deckfile icon: two stacked white slides on a blue tile">
+  <img src="docs/icon.svg" width="128" height="128" alt="deckfile icon: two stacked white slides on a vermilion tile">
 </p>
 
 <h1 align="center">deckfile</h1>
@@ -209,8 +209,8 @@ A deck has three `<style>` blocks:
 <style>/* deck-specific */</style>    <!-- CSS for this deck alone -->
 ```
 
-The default theme has white slides with large, quiet type and one accent colour,
-and black `.dark` slides for emphasis. To
+The default theme sets paper-white slides flush left on a grid, with hairlines
+instead of boxes and one accent colour, and near-black `.dark` slides for emphasis. To
 brand it, change the tokens in its `:root`: colours, three font stacks, and
 logo slots that take an SVG data URI. Anything bigger, such as square panels
 or a different title card, goes in the theme block or the deck-specific block.
@@ -219,8 +219,8 @@ The tokens are listed in
 
 Use only fonts whose license permits it, such as SIL Open Font License faces
 from Google Fonts, and fall back to generic families (`system-ui`, `serif`,
-`monospace`) so the deck still reads well offline. The default theme uses Inter
-and JetBrains Mono, the same on every platform when online.
+`monospace`) so the deck still reads well offline. The default theme uses Geist
+and Geist Mono, the same on every platform when online.
 
 ## Updating the engine
 

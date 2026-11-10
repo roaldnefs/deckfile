@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>deckfile</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x2=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%232997FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230060D0%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2232%22 height=%2232%22 rx=%227.5%22 fill=%22url(%23g)%22/%3E%3Crect x=%2210.5%22 y=%227.5%22 width=%2215%22 height=%2210%22 rx=%222%22 fill=%22%23fff%22 opacity=%22.55%22/%3E%3Crect x=%226.5%22 y=%2212.5%22 width=%2218%22 height=%2212%22 rx=%222.25%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%224%22 fill=%22%23C2310A%22/%3E%3Crect x=%2210.5%22 y=%227.5%22 width=%2215%22 height=%2210%22 rx=%221%22 fill=%22%23fff%22 opacity=%22.55%22/%3E%3Crect x=%226.5%22 y=%2212.5%22 width=%2218%22 height=%2212%22 rx=%221%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <!--
   Built with deckfile: https://github.com/roaldnefs/deckfile
   One self-contained file. The only network requests are for the Google Fonts below; every font stack
   falls back to a generic family, so the deck also works offline from file://.
-  Fonts (all SIL Open Font License 1.1): Inter, JetBrains Mono.
+  Fonts (all SIL Open Font License 1.1): Geist, Geist Mono.
 
   <style data-deck="engine"> and <script data-deck="engine"> hold the engine. Don't edit them; update them with
   `npx github:roaldnefs/deckfile update <this file>`. <style data-deck="theme"> is the theme and yours to change:
   set its tokens to brand the deck. CSS for this deck alone goes in the last <style>.
 
   Slides (this theme):
-    <section class="slide">             light content slide
+    <section class="slide">             light content slide; <div class="kicker"> names its part in the top margin
     <section class="slide title">       title card (icon logo)
     <section class="slide divider">     section divider, usually with dark
     <section class="slide dark">        dark emphasis slide (titles, dividers)
@@ -28,7 +28,7 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
 <style data-deck="engine">
 /*! deckfile v0.2.0 · engine styles · MIT License · https://github.com/roaldnefs/deckfile
   What the engine needs to place, show and print slides. The look of the slides is the theme's. */
@@ -51,21 +51,21 @@ html,body{margin:0;height:100%;overflow:hidden}
 #notes::before{content:"Speaker notes";display:block}
 [hidden]{display:none!important}
 
-/* back, presenter, edit, shortcuts and forward: light grey, near the bottom-left corner only, readable on any slide */
-#deck-controls{position:fixed;left:20px;bottom:20px;z-index:15;display:flex;gap:2px;padding:4px;border-radius:999px;
-  background:rgba(229,229,234,.85);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+/* back, presenter, edit, shortcuts and forward: a dark bar with a light edge, near the bottom-left corner only, readable on any slide */
+#deck-controls{position:fixed;left:20px;bottom:20px;z-index:15;display:flex;gap:2px;padding:3px;border-radius:4px;
+  background:#111110;box-shadow:0 0 0 1px rgba(255,255,255,.2);
   opacity:0;pointer-events:none;transition:opacity .15s ease}
 #deck-controls:is(.near,.open){opacity:1;pointer-events:auto}
 html.editing #deck-controls{display:none}
-#deck-controls button{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:50%;
-  background:none;color:#636366;cursor:pointer}
-#deck-controls button:hover{background:rgba(0,0,0,.08);color:#1D1D1F}
-#deck-help{position:absolute;left:0;bottom:calc(100% + 10px);display:grid;grid-template-columns:auto auto;gap:7px 16px;align-items:center;
-  width:max-content;padding:14px 18px;border-radius:14px;background:#F5F5F7;color:#1D1D1F;
-  box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 12px 40px rgba(0,0,0,.3);font:400 13px/1.3 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#deck-controls button{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:2px;
+  background:none;color:#B5B5B0;cursor:pointer}
+#deck-controls button:hover{background:rgba(255,255,255,.14);color:#fff}
+#deck-help{position:absolute;left:0;bottom:calc(100% + 8px);display:grid;grid-template-columns:auto auto;gap:8px 20px;align-items:center;
+  width:max-content;padding:14px 16px;border-radius:4px;background:#111110;color:#F2F2EF;
+  box-shadow:0 0 0 1px rgba(255,255,255,.2);font:400 13px/1.3 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .c-keys{display:flex;gap:4px}
-.c-keys span{min-width:12px;padding:3px 7px;border:1px solid rgba(0,0,0,.12);border-bottom-width:2px;border-radius:6px;background:#fff;
-  font-weight:500;font-size:12px;text-align:center}
+.c-keys span{min-width:12px;padding:3px 6px;border:1px solid rgba(255,255,255,.32);border-radius:3px;
+  font:500 11px/1.3 system-ui,sans-serif;text-align:center}
 
 /* print: one slide per page, all builds shown */
 @media print{
@@ -79,20 +79,21 @@ html.editing #deck-controls{display:none}
 }
 </style>
 <style data-deck="theme">
-/* deckfile default theme: white slides, large quiet type and one accent colour; black .dark slides for emphasis.
+/* deckfile default theme: paper-white slides set flush left on a grid, hairlines instead of boxes, one accent colour;
+   near-black .dark slides for emphasis.
    Brand it by changing the tokens in :root; anything bigger goes in your deck's own <style> after this block.
    See "Theming" in the README. */
 /* tokens (the part to change per brand) */
 :root{
-  --primary:#1D1D1F; --black:#000000;
-  --grey:#6E6E73; --light:#F5F5F7; --white:#FFFFFF; --action:#0071E3; --action-dark:#2997FF;
-  --ink:var(--primary); --muted:var(--grey); --accent:var(--action); --panel:var(--light);
+  --primary:#111110; --black:#0C0C0B;
+  --grey:#66665F; --light:#EDECE6; --white:#F7F6F2; --action:#C2310A; --action-dark:#FF6A3D;
+  --ink:var(--primary); --muted:var(--grey); --accent:var(--action); --panel:var(--light); --paper:var(--white);
   /* lines on light slides, derived from --primary */
-  --line:rgba(29,29,31,.12);
+  --line:rgba(17,17,16,.16);
   /* OFL fonts only, the same on every platform; fallbacks are generic CSS families, never named system fonts */
-  --font-display:"Inter",system-ui,sans-serif;
-  --font-body:"Inter",system-ui,sans-serif;
-  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font-display:"Geist",system-ui,sans-serif;
+  --font-body:"Geist",system-ui,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,monospace;
   /* logo slots: url("data:image/svg+xml,…") or none. --logo/--icon sit on light slides,
      --logo-dark/--icon-dark on .dark slides. --watermark is an optional large mark. */
   --logo:none; --icon:none; --logo-dark:none; --icon-dark:none;
@@ -101,100 +102,96 @@ html.editing #deck-controls{display:none}
 
 /* slides (the engine places and scales them; the theme gives them their look) */
 html,body{background:var(--black)}
-/* the heading stays put from slide to slide; what follows it is centred in the room left */
-.slide{display:flex;flex-direction:column;padding:120px 160px;color:var(--ink);font:400 40px/1.4 var(--font-body);letter-spacing:-.005em;
-  background:var(--white);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.slide>:is(.cols,.keys,.stats,.term,ul){margin-block:auto}
-/* title, closing and divider: one centred thought */
-.slide:is(.title,.closing,.divider){display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center}
+/* a rule under the top margin, which holds the kicker and the slide number; the heading starts below it,
+   and what follows the heading stands on the bottom margin */
+.slide{display:flex;flex-direction:column;padding:176px 120px 120px;color:var(--ink);font:400 36px/1.45 var(--font-body);letter-spacing:-.01em;
+  background:linear-gradient(var(--line),var(--line)) 120px 120px/1680px 1px no-repeat,var(--paper);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.slide>:is(.cols,.keys,.stats,.term,ul,ol){margin-top:auto}
+/* title, closing and divider: everything stands on the bottom margin */
+.slide:is(.title,.closing,.divider){justify-content:flex-end}
 /* title card: each time it is shown, the text rises in */
-.slide.title.current .kicker{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
-.slide.title.current h1{animation:rise .8s .1s cubic-bezier(.2,.7,.2,1) both}
-.slide.title.current :is(.sub,.byline){animation:rise .8s .5s cubic-bezier(.2,.7,.2,1) both}
-@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+.slide.title.current h1{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.slide.title.current :is(.sub,.byline){animation:rise .7s .25s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}}
 @media (prefers-reduced-motion:reduce){.slide.title,.slide.title *{animation:none!important}}
 /* optional watermark, large and low-contrast, off to the right */
 .slide::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:var(--watermark) no-repeat right -260px bottom -300px/1250px auto}
 /* logo in the bottom-left corner; icon only on title/closing cards */
-.slide::after{content:"";position:absolute;left:160px;bottom:64px;width:260px;height:60px;
+.slide::after{content:"";position:absolute;left:120px;bottom:36px;width:240px;height:48px;
   background:var(--logo) no-repeat left center/contain}
-.slide.title::after,.slide.closing::after{width:60px;height:60px;background-image:var(--icon)}
+.slide.title::after,.slide.closing::after{width:48px;height:48px;background-image:var(--icon)}
 .slide>*{position:relative;z-index:1}
 /* dark emphasis slides */
-.slide.dark{--ink:var(--white);--muted:rgba(255,255,255,.72);--accent:var(--action-dark);
-  --line:rgba(255,255,255,.16);--panel:rgba(255,255,255,.08);
-  background:var(--black)}
-/* dark title card: a faint haze of the accent colour drifts behind the text */
-.slide.dark.title{background:
-  radial-gradient(50% 50% at 30% 30%,color-mix(in srgb,var(--action) 24%,transparent),transparent),
-  radial-gradient(40% 40% at 70% 70%,color-mix(in srgb,var(--action-dark) 14%,transparent),transparent),
-  var(--black);background-size:200% 200%}
-.slide.dark.title.current{animation:drift 24s ease-in-out infinite alternate}
-@keyframes drift{from{background-position:0 0}to{background-position:100% 100%}}
+.slide.dark{--ink:var(--white);--muted:rgba(247,246,242,.62);--accent:var(--action-dark);
+  --line:rgba(247,246,242,.2);--panel:rgba(247,246,242,.07);--paper:var(--black)}
 .slide.dark::before{background-image:var(--watermark-dark)}
 .slide.dark::after{background-image:var(--logo-dark)}
 .slide.dark.title::after,.slide.dark.closing::after{background-image:var(--icon-dark)}
-.counter{position:absolute;right:64px;bottom:48px;font:400 20px/1 var(--font-body);letter-spacing:0;color:var(--muted)}
+/* the top margin: where you are on the left, the slide number on the right */
+.slide>.kicker,.counter{position:absolute;top:72px;font:500 22px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+.slide>.kicker{left:120px;color:var(--accent)}
+.counter{right:120px;color:var(--muted)}
 
 /* type */
-h1{font:600 144px/1.05 var(--font-display);letter-spacing:-.022em;margin:0 0 36px}
-h2{font:600 88px/1.08 var(--font-display);letter-spacing:-.016em;margin:0 0 48px}
-h3{font:600 40px/1.2 var(--font-display);letter-spacing:-.01em;margin:0 0 20px}
+h1{font:600 144px/.98 var(--font-display);letter-spacing:-.045em;margin:0 0 40px}
+h2{font:600 76px/1.04 var(--font-display);letter-spacing:-.035em;max-width:1400px;margin:0 0 36px}
+/* a label over a column, with a rule under it */
+h3{font:500 22px/1.2 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 28px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 p{margin:0 0 .7em}
-.kicker{font:600 30px/1.2 var(--font-body);letter-spacing:-.01em;color:var(--accent);margin:0 0 20px}
-.sub{font:400 48px/1.25 var(--font-body);letter-spacing:-.01em;color:var(--muted);max-width:1400px;margin:0 0 40px}
-h2+.sub{margin-top:-20px}
-.title h1{font-size:184px}
-.title .sub{max-width:1240px}
-.byline{font-size:28px;color:var(--muted);margin:32px 0 0}
-.divider h1{font-size:176px;margin:0}
+.sub{font:400 40px/1.3 var(--font-body);letter-spacing:-.015em;color:var(--muted);max-width:1240px;margin:0 0 40px}
+h2+.sub{margin-top:-12px}
+.title h1{font-size:232px;margin-left:-.04em}
+.title .sub{color:var(--ink);max-width:1100px}
+.byline{font:500 22px/1.2 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:24px 0 0}
+.divider h1{font-size:232px;margin:0 0 0 -.04em}
 .closing h1{font-size:120px}
 ul,ol{margin:0;padding:0 0 0 1.1em}
-li{margin:0 0 .7em;padding-left:.3em}
+li{margin:0 0 .5em;padding-left:.3em}
+/* plain lines between rules; a rule belongs to its line, so it fades in with a build */
 ul{list-style:none;padding-left:0}
-ul li{padding-left:0;font-size:56px;line-height:1.2;letter-spacing:-.012em}
-.agenda{font:600 64px/1.15 var(--font-display);letter-spacing:-.015em;counter-reset:agenda;list-style:none;padding:0}
-.agenda li{counter-increment:agenda;display:flex;align-items:baseline;gap:0;padding:0;margin-bottom:.55em}
-.agenda li::before{content:counter(agenda,decimal-leading-zero);flex:0 0 120px;
-  font:600 32px/1 var(--font-display);letter-spacing:0;color:var(--accent)}
-small,.small{font-size:28px;letter-spacing:-.005em;color:var(--muted)}
-code{font:400 .84em var(--font-mono);letter-spacing:0}
+ul li{margin:0;padding:26px 0;border-top:1px solid var(--line);font-size:44px;line-height:1.2;letter-spacing:-.02em}
+ul li:last-child{border-bottom:1px solid var(--line)}
+.agenda{font:500 44px/1.2 var(--font-display);letter-spacing:-.02em;counter-reset:agenda;list-style:none;padding:0}
+.agenda li{counter-increment:agenda;display:flex;align-items:baseline;margin:0;padding:26px 0;border-top:1px solid var(--line)}
+.agenda li:last-child{border-bottom:1px solid var(--line)}
+.agenda li::before{content:counter(agenda,decimal-leading-zero);flex:0 0 96px;
+  font:500 22px/1 var(--font-mono);letter-spacing:.06em;color:var(--accent)}
+small,.small{font-size:24px;letter-spacing:0;color:var(--muted)}
+code{font:400 .88em var(--font-mono);letter-spacing:0}
 a{color:inherit}
 
 /* components */
-.btn{display:inline-block;padding:22px 40px;border:1px solid var(--ink);border-radius:999px;
-  font:500 28px/1 var(--font-body);letter-spacing:-.01em;color:var(--ink);text-decoration:none}
-.btn::after{content:"\00a0›"}
-.btn.action{border-color:var(--action);background:var(--action);color:var(--white)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.stat{background:var(--panel);border-radius:28px;padding:64px 56px}
-.stat .n{font:600 120px/1 var(--font-display);letter-spacing:-.02em;display:block;margin-bottom:24px}
-.stat .cap{font:400 32px/1.3 var(--font-body);letter-spacing:-.005em;color:var(--muted);display:block}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
-.term{background:var(--panel);border-radius:20px;padding:44px 48px;
-  font:400 28px/1.6 var(--font-mono);letter-spacing:0;color:var(--ink);white-space:pre;overflow:hidden}
+.btn{display:inline-block;align-self:flex-start;padding:24px 32px;border:2px solid var(--ink);border-radius:2px;
+  font:500 26px/1 var(--font-body);letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.btn::after{content:"\00a0\00a0→"}
+.btn.action{border-color:var(--accent);background:var(--accent);color:var(--paper)}
+/* figures under a heavy rule, each with a caption */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+.stat{border-top:3px solid var(--ink);padding-top:28px}
+.stat .n{font:600 136px/1 var(--font-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums;display:block;margin-bottom:20px}
+.stat .cap{font:500 22px/1.3 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start}
+.term{background:var(--panel);border-radius:4px;padding:40px 44px;
+  font:400 26px/1.6 var(--font-mono);letter-spacing:0;color:var(--ink);white-space:pre;overflow:hidden}
 .term .b{color:var(--accent)}
 .term .d{color:var(--muted)}
-.term .w{font-weight:500}
-/* a screenshot or drawing shown as a floating window */
-.window{border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.12)}
+.term .w{font-weight:600}
+/* a screenshot or drawing in a thin frame */
+.window{border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 24px 48px -28px rgba(0,0,0,.3)}
 .window>*{display:block;width:100%;height:auto}
 /* separate borders belong to the cells, so a row's line fades in with its build */
-.keys{font-size:36px;line-height:1.3;border-collapse:separate;border-spacing:0;width:100%}
-.keys td{padding:24px 24px 24px 0;border-bottom:1px solid var(--line)}
-.keys tr:last-child td{border-bottom:0}
-.keys td:first-child{width:300px}
-kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--white);box-shadow:0 1px 2px rgba(0,0,0,.08);
-  font:500 .8em/1 var(--font-body);letter-spacing:0;text-align:center;margin-right:8px}
+.keys{font-size:32px;line-height:1.3;border-collapse:separate;border-spacing:0;width:100%}
+.keys td{padding:24px 24px 24px 0;border-top:1px solid var(--line)}
+.keys tr:last-child td{border-bottom:1px solid var(--line)}
+.keys td:first-child{width:320px}
+kbd{display:inline-block;min-width:1.3em;padding:9px 12px;border:1.5px solid var(--ink);border-radius:4px;
+  font:500 .72em/1 var(--font-body);letter-spacing:0;text-align:center;margin-right:8px}
 
-
-/* print: the title card without its entrance or its haze */
-@media print{
-  .slide.title *{animation:none!important}
-  .slide.dark.title,.slide.dark.title.current{background:var(--black);animation:none}
-}
+/* print: the title card without its entrance */
+@media print{.slide.title *{animation:none!important}}
 </style>
 <style>
 /* deck-specific */
@@ -235,8 +232,9 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
 
 <!-- 1 · title card -->
 <section class="slide dark title">
+  <div class="kicker">Example deck</div>
   <h1>deckfile</h1>
-  <p class="sub">A presentation as one HTML file, with no build step and no dependencies. It works offline.</p>
+  <p class="sub">A presentation as one HTML file. No build step, no dependencies, and it works offline.</p>
   <p class="byline">Press → to continue</p>
   <div class="s-notes">
     <p>These are speaker notes. The presenter view and the edit view show them, and no slide does.</p>
@@ -245,9 +243,10 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
 
 <!-- 2 · what is in the file, row by row -->
 <section class="slide">
+  <div class="kicker">Overview</div>
   <h2>Everything is in one file</h2>
   <table class="keys" style="white-space:nowrap">
-    <tr class="build"><td style="width:560px"><code>&lt;style data-deck="engine"&gt;</code></td><td>Places, scales and prints the slides</td><td class="small">Replaced on update</td></tr>
+    <tr class="build"><td style="width:540px"><code>&lt;style data-deck="engine"&gt;</code></td><td>Places, scales and prints the slides</td><td class="small">Replaced on update</td></tr>
     <tr class="build"><td><code>&lt;style data-deck="theme"&gt;</code></td><td>Colours, fonts and slide layouts</td><td class="small">Yours to change</td></tr>
     <tr class="build"><td><code>&lt;section class="slide"&gt;</code></td><td>One per slide, with its speaker notes</td><td class="small">Yours to write</td></tr>
     <tr class="build"><td><code>&lt;script data-deck="engine"&gt;</code></td><td>Keys, builds, presenter view, edit view</td><td class="small">Replaced on update</td></tr>
@@ -262,37 +261,69 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   <div class="kicker">01</div>
   <h1>Write</h1>
   <div class="s-notes">
-    <p>How a slide is written: its markup, builds, speaker notes and theme.</p>
+    <p>How a slide is written: its markup, classes, builds, speaker notes and theme.</p>
   </div>
 </section>
 
 <!-- 4 · markup and what it renders -->
 <section class="slide">
+  <div class="kicker">01 · Write</div>
   <h2>A slide is a section</h2>
-  <div class="cols" style="align-items:center">
-    <div class="term">&lt;section class="slide"&gt;
+  <div class="cols">
+    <div>
+      <h3>Markup</h3>
+      <div class="term" style="box-sizing:border-box;min-height:452px">&lt;section class="slide"&gt;
   &lt;h2&gt;One idea per slide&lt;/h2&gt;
   &lt;ul&gt;
     &lt;li&gt;Say one thing&lt;/li&gt;
     &lt;li&gt;Show it large&lt;/li&gt;
   &lt;/ul&gt;
 &lt;/section&gt;</div>
-    <div class="window"><div style="zoom:.396;box-sizing:border-box;aspect-ratio:16/9;padding:120px 160px;background:var(--white)">
-      <h2>One idea per slide</h2>
-      <ul>
-        <li>Say one thing</li>
-        <li>Show it large</li>
-      </ul>
-    </div></div>
+    </div>
+    <div>
+      <h3>Result</h3>
+      <div class="window"><div style="zoom:.41875;box-sizing:border-box;aspect-ratio:16/9;display:flex;flex-direction:column;padding:176px 120px 120px;background:var(--paper)">
+        <h2>One idea per slide</h2>
+        <ul style="margin-top:auto">
+          <li>Say one thing</li>
+          <li>Show it large</li>
+        </ul>
+      </div></div>
+    </div>
   </div>
   <div class="s-notes">
     <p>The markup on the left renders as the slide on the right. The engine shows one section at a time and scales it to the window.</p>
   </div>
 </section>
 
-<!-- 5 · builds, by hand -->
+<!-- 5 · the classes of the theme -->
 <section class="slide">
-  <h2>Builds reveal one item per press</h2>
+  <div class="kicker">01 · Write</div>
+  <h2>Classes lay it out</h2>
+  <p class="sub">The theme has a class for each kind of slide and each block on it.</p>
+  <div class="cols" style="grid-template-columns:repeat(3,1fr)">
+    <div>
+      <h3>On the section</h3>
+      <p><code>title</code> opens the deck<br><code>divider</code> starts a part<br><code>closing</code> ends it<br><code>dark</code> turns any of them dark</p>
+    </div>
+    <div>
+      <h3>Blocks</h3>
+      <p><code>cols</code> for columns<br><code>stats</code> for figures<br><code>keys</code> for a table<br><code>term</code> for code</p>
+    </div>
+    <div>
+      <h3>Text</h3>
+      <p><code>kicker</code> says where you are<br><code>sub</code> leads in<br><code>small</code> for a source<br><code>build</code> waits for a press</p>
+    </div>
+  </div>
+  <div class="s-notes">
+    <p>This slide is three columns with a label over each. The components reference lists every class with its markup.</p>
+  </div>
+</section>
+
+<!-- 6 · builds, by hand -->
+<section class="slide">
+  <div class="kicker">01 · Write</div>
+  <h2>A build waits for a press</h2>
   <p class="sub">Add <code>class="build"</code> to any element. Press → now.</p>
   <ul>
     <li class="build">This line came on the first press.</li>
@@ -304,9 +335,10 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   </div>
 </section>
 
-<!-- 6 · builds, on a timer -->
+<!-- 7 · builds, on a timer -->
 <section class="slide" data-auto="600">
-  <h2>data-auto reveals items on a timer</h2>
+  <div class="kicker">01 · Write</div>
+  <h2>data-auto reveals them on a timer</h2>
   <p class="sub">Add <code>data-auto="600"</code> to the section. Each item follows 600 ms after the last.</p>
   <div class="stats">
     <div class="stat build"><span class="n">0.6 s</span><span class="cap">First item</span></div>
@@ -318,87 +350,100 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   </div>
 </section>
 
-<!-- 7 · speaker notes -->
+<!-- 8 · speaker notes -->
 <section class="slide">
+  <div class="kicker">01 · Write</div>
   <h2>Speaker notes live inside the slide</h2>
-  <div class="cols" style="grid-template-columns:1fr 1.2fr;align-items:center">
+  <div class="cols">
     <div>
-      <p>They show in the presenter view, never on the slide or in the PDF.</p>
+      <h3>What the room sees</h3>
+      <p>Nothing. Notes show in the presenter view and the edit view, never on the slide or in the PDF.</p>
       <p>Press <kbd>S</kbd> to read this slide's notes.</p>
     </div>
-    <div class="term">&lt;section class="slide"&gt;
+    <div>
+      <h3>Markup</h3>
+      <div class="term">&lt;section class="slide"&gt;
   &lt;h2&gt;…&lt;/h2&gt;
   &lt;div class="s-notes"&gt;
     &lt;p&gt;What to say here.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/section&gt;</div>
+    </div>
   </div>
   <div class="s-notes">
     <p>These are this slide's notes. The presenter view and the edit view show them.</p>
   </div>
 </section>
 
-<!-- 8 · theme tokens -->
+<!-- 9 · theme tokens -->
 <section class="slide">
+  <div class="kicker">01 · Write</div>
   <h2>A theme is a set of CSS tokens</h2>
-  <div class="cols" style="grid-template-columns:1fr 1.5fr;align-items:center">
+  <div class="cols">
     <div>
+      <h3>To brand a deck</h3>
       <p>Set your colours, fonts and logo in the theme block, and every slide follows.</p>
       <p>CSS for one deck goes in the last <code>&lt;style&gt;</code> block.</p>
     </div>
-    <div class="term">:root{
-  --primary:<span class="b">#1D1D1F</span>;
-  --light:<span class="b">#F5F5F7</span>;
-  --action:<span class="b">#0071E3</span>;
-  --font-display:<span class="b">"Inter"</span>,…;
-  --font-mono:<span class="b">"JetBrains Mono"</span>,…;
+    <div>
+      <h3>Theme block</h3>
+      <div class="term">:root{
+  --primary:<span class="b">#111110</span>;
+  --white:<span class="b">#F7F6F2</span>;
+  --action:<span class="b">#C2310A</span>;
+  --font-display:<span class="b">"Geist"</span>,…;
+  --font-mono:<span class="b">"Geist Mono"</span>,…;
   --logo:<span class="b">none</span>;
 }</div>
+    </div>
   </div>
   <div class="s-notes">
     <p>These are real tokens from this file's theme block. The full list is in the theming reference.</p>
   </div>
 </section>
 
-<!-- 9 · section divider -->
+<!-- 10 · section divider -->
 <section class="slide dark divider">
   <div class="kicker">02</div>
   <h1>Present</h1>
   <div class="s-notes">
-    <p>What you get in front of a room: the presenter view and the keys.</p>
+    <p>What you get in front of a room: the presenter view, the keys and a PDF.</p>
   </div>
 </section>
 
-<!-- 10 · presenter view -->
+<!-- 11 · presenter view -->
 <section class="slide">
+  <div class="kicker">02 · Present</div>
   <h2>S opens the presenter view</h2>
-  <div class="cols" style="grid-template-columns:1fr 1.7fr;gap:72px;align-items:center">
+  <div class="cols" style="grid-template-columns:1fr 1.6fr;align-items:end">
     <div>
-      <p>Press <kbd>S</kbd> to open the presenter view.</p>
-      <p>A second window shows the current slide, what the next press shows, your notes, a timer and the clock.</p>
+      <p>A second window shows the current slide, what the next press brings, your notes, a timer and the clock.</p>
       <p>Steer from either window. They stay in step.</p>
     </div>
     <div class="window">
       <svg viewBox="0 0 960 600" role="img" aria-label="Drawing of the presenter view: timer on top, current slide on the left, next slide above the speaker notes on the right">
-        <rect width="960" height="600" fill="#1C1C1E"/>
-        <text x="26" y="44" fill="#F5F5F7" font-size="28" font-weight="500">08:42</text>
-        <circle cx="124" cy="35" r="14" fill="#3A3A3C"/><path d="M120 29v12M128 29v12" stroke="#F5F5F7" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="158" cy="35" r="14" fill="#3A3A3C"/><path d="M152 35a6 6 0 1 0 2-4.5" fill="none" stroke="#F5F5F7" stroke-width="2" stroke-linecap="round"/>
-        <text x="934" y="43" text-anchor="end" fill="#98989D" font-size="20" font-weight="500">10:24</text>
-        <rect x="26" y="96" width="584" height="329" rx="10" fill="#fff"/>
-        <text x="318" y="250" text-anchor="middle" fill="#1D1D1F" font-size="40" font-weight="700" letter-spacing="-1">One idea per slide</text>
-        <text x="318" y="288" text-anchor="middle" fill="#6E6E73" font-size="20">with room to breathe</text>
-        <rect x="208" y="476" width="220" height="48" rx="24" fill="#2C2C2E"/>
-        <path d="M232 490l-9 10 9 10M404 490l9 10-9 10" fill="none" stroke="#F5F5F7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="318" y="506" text-anchor="middle" fill="#F5F5F7" font-size="17" font-weight="500">Slide 10 of 16</text>
-        <text x="634" y="88" fill="#98989D" font-size="16" font-weight="500">Next slide</text>
-        <rect x="634" y="100" width="300" height="169" rx="8" fill="#fff"/>
-        <rect x="660" y="160" width="190" height="16" rx="8" fill="#1D1D1F"/><rect x="660" y="188" width="130" height="10" rx="5" fill="#C7C7CC"/>
-        <rect x="634" y="290" width="300" height="284" rx="10" fill="#2C2C2E"/>
-        <text x="652" y="324" fill="#98989D" font-size="16" font-weight="500">Speaker notes</text>
-        <rect x="856" y="304" width="32" height="24" rx="6" fill="#3A3A3C"/><text x="872" y="321" text-anchor="middle" fill="#F5F5F7" font-size="13" font-weight="500">A−</text>
-        <rect x="892" y="304" width="32" height="24" rx="6" fill="#3A3A3C"/><text x="908" y="321" text-anchor="middle" fill="#F5F5F7" font-size="13" font-weight="500">A+</text>
-        <text fill="#F5F5F7" font-size="22"><tspan x="652" y="362">Open with the question,</tspan><tspan x="652" dy="32">then wait for a hand</tspan><tspan x="652" dy="32">to go up.</tspan></text>
+        <rect width="960" height="600" fill="#111110"/>
+        <text x="26" y="45" fill="#F2F2EF" font-size="26" font-weight="500">08:42</text>
+        <rect x="112" y="21" width="28" height="28" rx="3" fill="#2A2A28"/><path d="M122 29v12M130 29v12" stroke="#F2F2EF" stroke-width="3" stroke-linecap="round"/>
+        <rect x="146" y="21" width="28" height="28" rx="3" fill="#2A2A28"/><path d="M154 35a6 6 0 1 0 2-4.5" fill="none" stroke="#F2F2EF" stroke-width="2" stroke-linecap="round"/>
+        <text x="934" y="42" text-anchor="end" fill="#8F8F8A" font-size="16" font-weight="500">10:24</text>
+        <rect x="26" y="96" width="584" height="329" rx="3" fill="#F7F6F2"/>
+        <text x="62" y="128" fill="#C2310A" font-size="9" font-weight="500" letter-spacing="1">01 · WRITE</text>
+        <path d="M62 138.5h512M62 330.5h512M62 362.5h512M62 394.5h512" stroke="#111110" stroke-opacity=".16"/>
+        <text x="62" y="182" fill="#111110" font-size="30" font-weight="600" letter-spacing="-1">One idea per slide</text>
+        <rect x="62" y="342" width="150" height="9" rx="2" fill="#111110"/><rect x="62" y="374" width="120" height="9" rx="2" fill="#111110"/>
+        <rect x="208.5" y="476.5" width="220" height="42" rx="4" fill="none" stroke="#F2F2EF" stroke-opacity=".2"/>
+        <path d="M232 488l-9 10 9 10M404 488l9 10-9 10" fill="none" stroke="#F2F2EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="318" y="502" text-anchor="middle" fill="#F2F2EF" font-size="12" font-weight="500" letter-spacing="1">SLIDE 11 OF 18</text>
+        <text x="634" y="88" fill="#8F8F8A" font-size="11" font-weight="500" letter-spacing="1">NEXT SLIDE</text>
+        <rect x="634" y="100" width="300" height="169" rx="3" fill="#F7F6F2"/>
+        <path d="M652 120.5h264" stroke="#111110" stroke-opacity=".16"/>
+        <rect x="652" y="136" width="170" height="14" rx="2" fill="#111110"/><rect x="652" y="160" width="120" height="8" rx="2" fill="#B9B8B2"/>
+        <rect x="634" y="290" width="300" height="284" rx="3" fill="#1C1C1A"/>
+        <text x="652" y="322" fill="#8F8F8A" font-size="11" font-weight="500" letter-spacing="1">SPEAKER NOTES</text>
+        <rect x="860" y="304" width="30" height="24" rx="3" fill="#2A2A28"/><text x="875" y="320" text-anchor="middle" fill="#F2F2EF" font-size="12" font-weight="500">A−</text>
+        <rect x="894" y="304" width="30" height="24" rx="3" fill="#2A2A28"/><text x="909" y="320" text-anchor="middle" fill="#F2F2EF" font-size="12" font-weight="500">A+</text>
+        <text fill="#F2F2EF" font-size="22"><tspan x="652" y="362">Open with the question,</tspan><tspan x="652" dy="32">then wait for a hand</tspan><tspan x="652" dy="32">to go up.</tspan></text>
       </svg>
     </div>
   </div>
@@ -407,23 +452,39 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   </div>
 </section>
 
-<!-- 11 · keys -->
+<!-- 12 · keys -->
 <section class="slide">
-  <h2>Steer the deck from the keyboard</h2>
+  <div class="kicker">02 · Present</div>
+  <h2>The keyboard steers the deck</h2>
   <table class="keys">
     <tr><td><kbd>→</kbd><kbd>Space</kbd></td><td>Next item, then next slide</td></tr>
     <tr><td><kbd>←</kbd></td><td>Back one item, then previous slide</td></tr>
     <tr><td><kbd>↓</kbd><kbd>↑</kbd></td><td>Next or previous slide, with every item shown</td></tr>
-    <tr><td><kbd>F</kbd><kbd>P</kbd></td><td>Fullscreen, print to PDF with one page per slide</td></tr>
+    <tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
     <tr><td><kbd>S</kbd><kbd>E</kbd></td><td>Presenter view, edit view</td></tr>
   </table>
-  <p class="small">Move the pointer to the bottom-left corner for buttons and the full list.</p>
+  <p class="small" style="margin:28px 0 0">Move the pointer to the bottom-left corner for buttons and the full list.</p>
   <div class="s-notes">
     <p>Clicking also works: the left 30 % of the screen goes back and the rest goes forward. On a touch screen, swipe.</p>
   </div>
 </section>
 
-<!-- 12 · section divider -->
+<!-- 13 · print -->
+<section class="slide">
+  <div class="kicker">02 · Present</div>
+  <h2>P prints the deck to PDF</h2>
+  <p class="sub">Press <kbd>P</kbd> and choose Save as PDF in the print dialog.</p>
+  <ul>
+    <li>One page per slide, at 1920 × 1080</li>
+    <li>Every build shown</li>
+    <li>Speaker notes left out</li>
+  </ul>
+  <div class="s-notes">
+    <p>The PDF is the hand-out. Backgrounds print as they show, so a dark slide stays dark.</p>
+  </div>
+</section>
+
+<!-- 14 · section divider -->
 <section class="slide dark divider">
   <div class="kicker">03</div>
   <h1>Change</h1>
@@ -432,57 +493,59 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   </div>
 </section>
 
-<!-- 13 · edit view -->
+<!-- 15 · edit view -->
 <section class="slide">
+  <div class="kicker">03 · Change</div>
   <h2>E opens the edit view</h2>
-  <div class="cols" style="grid-template-columns:1fr 1.7fr;gap:72px;align-items:center">
+  <div class="cols" style="grid-template-columns:1fr 1.6fr;align-items:end">
     <div>
-      <p>Press <kbd>E</kbd> to open the edit view.</p>
       <p>In Edit, double-click text to change it, or click an element to move, copy or delete it. Save writes the file.</p>
       <p>In Suggest, click an element and type what should change, for a coding agent.</p>
     </div>
     <div class="window">
       <svg viewBox="0 0 960 600" role="img" aria-label="Drawing of the edit view in Suggest: thumbnails on the left, a slide with one element outlined in orange and a suggestion box beside it, speaker notes below, suggestions on the right with Copy prompt below them, and the buttons for the open suggestion in the toolbar">
-        <rect width="960" height="600" fill="#F5F5F7"/>
-        <rect width="960" height="44" fill="#fff"/><path d="M0 44.5h960" stroke="#D9D9DE"/>
-        <text x="18" y="28" fill="#1D1D1F" font-size="14" font-weight="600">my-talk</text>
-        <path transform="translate(540 14)" d="M8 13V3M3.5 7.5 8 3l4.5 4.5" stroke="#1D1D1F" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(566 14)" d="M8 3v10M3.5 8.5 8 13l4.5-4.5" stroke="#AEAEB2" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(592 14)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#1D1D1F" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(618 14)" d="M3 8.5 6.5 12 13 4.5" stroke="#1D1D1F" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M646.5 12v20" stroke="#D9D9DE"/>
-        <rect x="658" y="11" width="118" height="22" rx="7" fill="#E8E8EC"/><rect x="704" y="13" width="70" height="18" rx="5" fill="#fff"/>
-        <text x="681" y="27" text-anchor="middle" fill="#1D1D1F" font-size="12">Edit</text><text x="739" y="27" text-anchor="middle" fill="#1D1D1F" font-size="12">Suggest</text>
-        <path transform="translate(788 14)" d="M3 8a5 5 0 1 0 1.5-3.5L3 6V2.5M3 6h3.5" stroke="#AEAEB2" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(816 14)" d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" stroke="#1D1D1F" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="852" y="27" text-anchor="middle" fill="#1D1D1F" font-size="13">Save</text>
-        <path d="M890 15v14l11-7z" fill="#1D1D1F"/><rect x="920" y="15" width="18" height="13" rx="2" fill="none" stroke="#1D1D1F" stroke-width="1.5"/>
-        <rect x="0" y="45" width="118" height="525" fill="#FBFBFD"/><path d="M118.5 45v525" stroke="#E2E2E6"/>
-        <rect x="16" y="60" width="88" height="50" rx="4" fill="#000"/>
-        <rect x="16" y="124" width="88" height="50" rx="4" fill="#fff" stroke="#007AFF" stroke-width="2.5"/><rect x="28" y="142" width="50" height="6" rx="3" fill="#1D1D1F"/>
-        <circle cx="104" cy="124" r="9" fill="#007AFF"/><text x="104" y="128" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">1</text>
-        <rect x="16" y="188" width="88" height="50" rx="4" fill="#fff" stroke="#E2E2E6"/><rect x="28" y="206" width="40" height="6" rx="3" fill="#C7C7CC"/>
-        <rect x="16" y="252" width="88" height="50" rx="4" fill="#000"/>
-        <rect x="16" y="316" width="88" height="50" rx="4" fill="#fff" stroke="#E2E2E6"/><rect x="28" y="334" width="46" height="6" rx="3" fill="#C7C7CC"/>
-        <rect x="142" y="66" width="560" height="315" rx="3" fill="#fff"/>
-        <text x="186" y="172" fill="#1D1D1F" font-size="34" font-weight="700" letter-spacing="-1">A heading that says the point</text>
-        <rect x="178" y="136" width="492" height="50" rx="4" fill="none" stroke="#FF9500" stroke-width="2.5"/>
-        <circle cx="178" cy="136" r="12" fill="#007AFF"/><circle cx="178" cy="136" r="8" fill="#fff"/><text x="178" y="140" text-anchor="middle" fill="#1D1D1F" font-size="9" font-weight="600">01</text>
-        <rect x="186" y="204" width="360" height="104" rx="14" fill="#fff" stroke="#D9D9DE"/>
-        <text x="202" y="230" fill="#6E6E73" font-size="13">Slide 7 › h2 "A heading that says…"</text>
-        <text x="202" y="258" fill="#1D1D1F" font-size="16">Make this one line shorter</text>
-        <path transform="translate(474 276)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#6E6E73" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
-        <circle cx="520" cy="284" r="14" fill="#007AFF"/><path d="M520 291v-14m-6 6 6-6 6 6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="119" y="412" width="607" height="158" fill="#fff"/><path d="M119 412.5h607" stroke="#E2E2E6"/>
-        <text x="142" y="442" fill="#6E6E73" font-size="13" font-weight="600">Speaker notes</text>
-        <rect x="142" y="458" width="380" height="9" rx="4.5" fill="#C7C7CC"/><rect x="142" y="478" width="280" height="9" rx="4.5" fill="#C7C7CC"/>
-        <rect x="726" y="45" width="234" height="525" fill="#FBFBFD"/><path d="M726.5 45v525" stroke="#E2E2E6"/>
-        <text x="744" y="76" fill="#1D1D1F" font-size="14" font-weight="600">Suggestions</text>
-        <text x="744" y="108" fill="#6E6E73" font-size="12" font-weight="600">Slide 7 · A heading…</text>
-        <text x="744" y="134" fill="#007AFF" font-size="12" font-weight="600">01</text>
-        <text fill="#1D1D1F" font-size="14"><tspan x="768" y="134">Make this one line</tspan><tspan x="768" dy="19">shorter</tspan></text>
-        <path d="M726 520.5h234" stroke="#E2E2E6"/>
-        <rect x="744" y="530" width="108" height="26" rx="8" fill="#007AFF"/><text x="798" y="548" text-anchor="middle" fill="#fff" font-size="13" font-weight="500">Copy prompt</text>
-        <path transform="translate(884 535)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#1D1D1F" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="906" y="548" fill="#1D1D1F" font-size="13">Clear</text>
-        <rect y="570" width="960" height="30" fill="#F5F5F7"/><path d="M0 570.5h960" stroke="#E2E2E6"/>
-        <text x="18" y="590" fill="#6E6E73" font-size="12">Slide 7 of 16</text>
-        <path transform="translate(878 577)" d="M2.5 3h11a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM6 3v10" stroke="#6E6E73" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
-        <path transform="translate(904 577)" d="M3.5 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="#6E6E73" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
-        <path transform="translate(930 577)" d="M2.5 3h11a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM10 3v10" stroke="#6E6E73" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <rect width="960" height="600" fill="#EFEFEC"/>
+        <rect width="960" height="44" fill="#fff"/><path d="M0 44.5h960" stroke="#D6D6D2"/>
+        <text x="18" y="28" fill="#111110" font-size="14" font-weight="600">my-talk</text>
+        <path transform="translate(540 14)" d="M8 13V3M3.5 7.5 8 3l4.5 4.5" stroke="#111110" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(566 14)" d="M8 3v10M3.5 8.5 8 13l4.5-4.5" stroke="#AEAEA9" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(592 14)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#111110" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(618 14)" d="M3 8.5 6.5 12 13 4.5" stroke="#111110" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M646.5 12v20" stroke="#D6D6D2"/>
+        <rect x="658.5" y="10.5" width="118" height="23" rx="4" fill="none" stroke="#C9C9C5"/><rect x="706" y="13" width="68" height="18" rx="2" fill="#111110"/>
+        <text x="682" y="26" text-anchor="middle" fill="#111110" font-size="12">Edit</text><text x="740" y="26" text-anchor="middle" fill="#fff" font-size="12">Suggest</text>
+        <path transform="translate(788 14)" d="M3 8a5 5 0 1 0 1.5-3.5L3 6V2.5M3 6h3.5" stroke="#AEAEA9" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(816 14)" d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" stroke="#111110" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="852" y="27" text-anchor="middle" fill="#111110" font-size="13">Save</text>
+        <path d="M890 15v14l11-7z" fill="#111110"/><rect x="920" y="15" width="18" height="13" rx="2" fill="none" stroke="#111110" stroke-width="1.5"/>
+        <rect x="0" y="45" width="118" height="525" fill="#FAFAF8"/><path d="M118.5 45v525" stroke="#D6D6D2"/>
+        <rect x="16" y="60" width="88" height="50" rx="2" fill="#0C0C0B"/><rect x="24" y="92" width="34" height="8" rx="1" fill="#F7F6F2"/>
+        <rect x="16" y="124" width="88" height="50" rx="2" fill="#F7F6F2" stroke="#111110" stroke-width="2"/><rect x="24" y="136" width="50" height="6" rx="1" fill="#111110"/>
+        <rect x="96" y="116" width="16" height="16" rx="2" fill="#111110"/><text x="104" y="128" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">1</text>
+        <rect x="16.5" y="188.5" width="87" height="49" rx="2" fill="#F7F6F2" stroke="#D6D6D2"/><rect x="24" y="200" width="40" height="6" rx="1" fill="#B9B8B2"/>
+        <rect x="16" y="252" width="88" height="50" rx="2" fill="#0C0C0B"/><rect x="24" y="284" width="28" height="8" rx="1" fill="#F7F6F2"/>
+        <rect x="16.5" y="316.5" width="87" height="49" rx="2" fill="#F7F6F2" stroke="#D6D6D2"/><rect x="24" y="328" width="46" height="6" rx="1" fill="#B9B8B2"/>
+        <rect x="142.5" y="66.5" width="559" height="314" fill="#F7F6F2" stroke="#CFCFCB"/>
+        <text x="178" y="98" fill="#C2310A" font-size="9" font-weight="500" letter-spacing="1">01 · WRITE</text>
+        <path d="M178 108.5h488" stroke="#111110" stroke-opacity=".16"/>
+        <text x="184" y="170" fill="#111110" font-size="30" font-weight="600" letter-spacing="-1">A heading that says the point</text>
+        <rect x="178" y="140" width="488" height="42" rx="2" fill="none" stroke="#FF9500" stroke-width="2.5"/>
+        <path d="M178 119h26a2 2 0 0 1 2 2v19h-28z" fill="#007AFF"/><text x="192" y="134" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">01</text>
+        <rect x="186.5" y="194.5" width="360" height="104" rx="4" fill="#fff" stroke="#C9C9C5"/>
+        <text x="202" y="220" fill="#6B6B66" font-size="13">Slide 8 › h2 "A heading that says…"</text>
+        <text x="202" y="248" fill="#111110" font-size="16">Make this one line shorter</text>
+        <path transform="translate(474 266)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#6B6B66" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <rect x="506" y="260" width="28" height="28" rx="3" fill="#111110"/><path d="M520 281v-14m-6 6 6-6 6 6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="119" y="412" width="607" height="158" fill="#fff"/><path d="M119 412.5h607" stroke="#D6D6D2"/>
+        <text x="142" y="440" fill="#6B6B66" font-size="11" font-weight="500" letter-spacing="1">SPEAKER NOTES</text>
+        <rect x="142" y="458" width="380" height="8" rx="2" fill="#C9C9C5"/><rect x="142" y="478" width="280" height="8" rx="2" fill="#C9C9C5"/>
+        <rect x="726" y="45" width="234" height="525" fill="#FAFAF8"/><path d="M726.5 45v525M726 88.5h234" stroke="#D6D6D2"/>
+        <text x="744" y="72" fill="#111110" font-size="11" font-weight="500" letter-spacing="1">SUGGESTIONS</text>
+        <text x="744" y="116" fill="#6B6B66" font-size="12" font-weight="600">Slide 8 · A heading…</text>
+        <text x="744" y="142" fill="#007AFF" font-size="11" font-weight="600">01</text>
+        <text fill="#111110" font-size="14"><tspan x="768" y="142">Make this one line</tspan><tspan x="768" dy="19">shorter</tspan></text>
+        <path d="M726 520.5h234" stroke="#D6D6D2"/>
+        <rect x="744" y="530" width="108" height="26" rx="3" fill="#111110"/><text x="798" y="548" text-anchor="middle" fill="#fff" font-size="13" font-weight="500">Copy prompt</text>
+        <path transform="translate(884 535)" d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" stroke="#111110" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="906" y="548" fill="#111110" font-size="13">Clear</text>
+        <rect y="570" width="960" height="30" fill="#EFEFEC"/><path d="M0 570.5h960" stroke="#D6D6D2"/>
+        <text x="18" y="590" fill="#6B6B66" font-size="12">Slide 8 of 18</text>
+        <path transform="translate(878 577)" d="M2.5 3h11a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM6 3v10" stroke="#6B6B66" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <path transform="translate(904 577)" d="M3.5 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="#6B6B66" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <path transform="translate(930 577)" d="M2.5 3h11a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM10 3v10" stroke="#6B6B66" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
       </svg>
     </div>
   </div>
@@ -491,15 +554,16 @@ kbd{display:inline-block;min-width:1.2em;padding:8px 14px;border:1px solid var(-
   </div>
 </section>
 
-<!-- 14 · the prompt it writes -->
+<!-- 16 · the prompt it writes -->
 <section class="slide">
+  <div class="kicker">03 · Change</div>
   <h2>Copy prompt collects every suggestion</h2>
   <p class="sub">Paste it into Claude Code or another coding agent. It names the file, the slide and the element.</p>
-  <div class="term">## 1. Slide 7: Speaker notes live inside the slide
+  <div class="term">## 1. Slide 8: Speaker notes live inside the slide
 
-Where: box x 160-1760, y 120-215, on `h2` "Speaker notes live inside the slide"
+Where: box x 120-1520, y 176-255, on `h2` "Speaker notes live inside the slide"
 
-Element: `#stage &gt; section:nth-child(7) &gt; h2:nth-child(1)`
+Element: `#stage &gt; section:nth-child(8) &gt; h2:nth-child(2)`
 
 Suggestion: <span class="w">Make this heading shorter</span></div>
   <div class="s-notes">
@@ -507,8 +571,9 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
   </div>
 </section>
 
-<!-- 15 · updating -->
+<!-- 17 · updating -->
 <section class="slide">
+  <div class="kicker">03 · Change</div>
   <h2>Updating replaces only the engine</h2>
   <p class="sub">Your slides and theme stay as they are.</p>
   <div class="term"><span class="b">$</span> <span class="w">npx github:roaldnefs/deckfile update my-talk/index.html</span>
@@ -521,10 +586,11 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
   </div>
 </section>
 
-<!-- 16 · closing -->
+<!-- 18 · closing -->
 <section class="slide dark closing">
-  <h1>Start from<br>template.html</h1>
-  <ol class="agenda" style="margin-bottom:40px;font-size:48px;font-weight:500;text-align:left">
+  <div class="kicker">Start</div>
+  <h1>Start from template.html</h1>
+  <ol class="agenda" style="margin-bottom:56px">
     <li>Copy it to my-talk/index.html</li>
     <li>Replace the slides with your own</li>
     <li>Open it in a browser</li>
@@ -879,21 +945,21 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     const css = document.createElement('style');
     css.textContent = `
       @media screen{
-        html.presenter,html.presenter body{background:#1C1C1E}
+        html.presenter,html.presenter body{background:#111110}
         html.presenter #stage{display:none}
         /* timer on top, current slide left, next slide above the notes right */
         #presenter{position:fixed;inset:0;box-sizing:border-box;padding:12px 20px 16px;display:grid;row-gap:12px;
           grid-template:"top top top" auto "cur vbar side" minmax(0,1fr) / minmax(0,var(--cur-w,62%)) 20px minmax(0,1fr);
-          color:#F5F5F7;font:400 15px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          color:#F2F2EF;font:400 15px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         #presenter [hidden]{display:none!important}
         .p-top{grid-area:top;display:flex;align-items:center;gap:8px}
-        html.presenter #timer{position:static;padding:0 8px 0 0;background:none;border:0;color:#F5F5F7;
-          font:500 28px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-        .p-link{padding:5px 12px;border-radius:999px;background:rgba(255,69,58,.18);color:#FF6961;font-size:13px;font-weight:500}
-        .p-clock{margin-left:auto;color:#98989D;font:500 20px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-        #presenter button{display:grid;place-items:center;padding:0;border:0;background:rgba(255,255,255,.1);color:#F5F5F7;cursor:pointer}
+        html.presenter #timer{position:static;padding:0 8px 0 0;background:none;border:0;color:#F2F2EF;
+          font:500 26px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+        .p-link{padding:5px 10px;border-radius:3px;background:rgba(255,69,58,.18);color:#FF6961;font-size:13px;font-weight:500}
+        .p-clock{margin-left:auto;color:#8F8F8A;font:500 16px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+        #presenter button{display:grid;place-items:center;padding:0;border:0;background:rgba(255,255,255,.1);color:#F2F2EF;cursor:pointer}
         #presenter button:hover{background:rgba(255,255,255,.18)}
-        .p-pause,.p-reset{width:30px;height:30px;border-radius:50%}
+        .p-pause,.p-reset{width:30px;height:30px;border-radius:3px}
         .p-pause svg{fill:currentColor}
         .p-vbar{grid-area:vbar;cursor:col-resize}
         .p-hbar{flex:none;height:20px;cursor:row-resize}
@@ -906,27 +972,27 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
         .p-hbar:hover::after,.p-hbar.p-drag::after{top:8px;height:4px;background:rgba(255,255,255,.35)}
         /* a slide pane holds the largest 16:9 slide that fits */
         .p-slide,.p-next{container-type:size;display:grid;place-items:center}
-        #presenter iframe{display:block;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;border:0;border-radius:10px;background:#000;pointer-events:none}
+        #presenter iframe{display:block;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;border:0;border-radius:3px;background:#000;pointer-events:none}
         .p-cur{grid-area:cur;display:flex;flex-direction:column;gap:12px;min-height:0}
         .p-slide{flex:1;min-height:0}
         .p-nav{flex:none;display:flex;align-items:center;justify-content:center;gap:16px}
-        /* previous, the count and next in one capsule */
-        .p-ctl{display:flex;align-items:center;gap:8px;padding:4px;border-radius:999px;background:#2C2C2E}
-        #presenter .p-ctl button{width:36px;height:36px;border-radius:50%;background:none}
+        /* previous, the count and next in one outlined bar */
+        .p-ctl{display:flex;align-items:center;gap:8px;padding:3px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+        #presenter .p-ctl button{width:34px;height:34px;border-radius:2px;background:none}
         #presenter .p-ctl button:hover{background:rgba(255,255,255,.12)}
-        .p-count{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
-        .p-left{color:#98989D;font-size:13px}
+        .p-count{font:500 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+        .p-left{color:#8F8F8A;font-size:13px}
         .p-side{grid-area:side;display:flex;flex-direction:column;min-width:0;min-height:0}
-        .p-label{flex:none;margin-bottom:8px;font-size:13px;font-weight:500;color:#98989D}
+        .p-label{flex:none;margin-bottom:8px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8F8F8A}
         .p-next{position:relative;flex:none;width:100%;aspect-ratio:16/9}
         #presenter.sized .p-next{flex:0 1 var(--next-h);min-height:80px;aspect-ratio:auto}
-        .p-end{position:absolute;inset:0;display:grid;place-items:center;border-radius:10px;background:#000;color:#98989D}
+        .p-end{position:absolute;inset:0;display:grid;place-items:center;border-radius:3px;background:#000;color:#8F8F8A}
         .p-notes{flex:1;position:relative;min-height:80px}
-        html.presenter #notes{position:absolute;inset:0;max-height:none;overflow:auto;padding:16px 20px;border:0;border-radius:10px;
-          background:#2C2C2E;color:#F5F5F7;font:400 24px/1.5 system-ui,sans-serif}
-        html.presenter #notes::before{margin-bottom:10px;font:500 13px/1 system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#98989D}
+        html.presenter #notes{position:absolute;inset:0;max-height:none;overflow:auto;padding:16px 20px;border:0;border-radius:3px;
+          background:#1C1C1A;color:#F2F2EF;font:400 24px/1.5 system-ui,sans-serif}
+        html.presenter #notes::before{margin-bottom:12px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8F8F8A}
         .p-size{position:absolute;top:10px;right:12px;z-index:11;display:flex;gap:4px}
-        #presenter .p-size button{padding:5px 9px;border-radius:7px;font:500 13px/1 system-ui,sans-serif}
+        #presenter .p-size button{padding:5px 8px;border-radius:3px;font:500 12px/1 system-ui,sans-serif}
       }
       @media print{#presenter{display:none}}`;
     document.head.append(css);
@@ -1046,8 +1112,8 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
     return `
       @media screen{
         #edit,#edit-bar,#edit-rail,#edit-status,#edit-layer,#edit-layouts{display:none}
-        html.editing,html.editing body{background:#F5F5F7}
-        html.editing #stage{left:var(--edit-x);top:var(--edit-y);box-shadow:0 calc(4px / var(--scale)) calc(30px / var(--scale)) rgba(0,0,0,.14)}
+        html.editing,html.editing body{background:#EFEFEC}
+        html.editing #stage{left:var(--edit-x);top:var(--edit-y);box-shadow:0 0 0 calc(1px / var(--scale)) rgba(0,0,0,.16)}
         /* nothing moves here: outlines are measured from what is on the slide */
         html.editing .build{transition:none}
         html.editing .slide,html.editing .slide *{animation:none!important}
@@ -1055,11 +1121,11 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
         /* marks sit in the scaled slide; dividing by --scale keeps their lines and numbers one size on screen.
            A thin dark edge keeps the orange visible on any slide */
         .e-mark{position:absolute;pointer-events:none}
-        .e-mark span{position:absolute;left:0;bottom:100%;width:30px;height:30px;display:grid;place-items:center;
-          border-radius:50% 50% 50% 0;background:radial-gradient(circle,#fff 0 11px,#007AFF 11.5px);color:#1D1D1F;
-          font:600 11px/1 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:scale(calc(1 / var(--scale)));
+        .e-mark span{position:absolute;left:0;bottom:100%;width:28px;height:22px;display:grid;place-items:center;
+          border-radius:2px 2px 2px 0;background:#007AFF;color:#fff;
+          font:600 11px/1 system-ui,sans-serif;box-shadow:0 0 0 1px rgba(0,0,0,.25);transform:scale(calc(1 / var(--scale)));
           transform-origin:0 100%;pointer-events:auto;cursor:pointer}
-        .e-box,.e-hover,.e-sel{box-sizing:border-box;border:calc(2px / var(--scale)) solid #FF9500;border-radius:calc(4px / var(--scale));
+        .e-box,.e-hover,.e-sel{box-sizing:border-box;border:calc(2px / var(--scale)) solid #FF9500;border-radius:calc(2px / var(--scale));
           box-shadow:0 0 0 calc(1px / var(--scale)) rgba(0,0,0,.25)}
         .e-sel{border-color:#007AFF}
         /* the text being typed in */
@@ -1069,109 +1135,107 @@ Suggestion: <span class="w">Make this heading shorter</span></div>
         .e-mark.e-lit span{transform:scale(calc(1.2 / var(--scale)))}
         /* its element is gone or changed */
         .e-box.e-stale{border-style:dashed;border-color:#8E8E93}
-        .e-mark.e-stale span{background:radial-gradient(circle,#fff 0 11px,#8E8E93 11.5px)}
+        .e-mark.e-stale span{background:#8E8E93}
         /* the panes use the system font, whatever the deck's fonts are */
         html.editing #edit-bar,html.editing #edit-rail,html.editing #edit,html.editing #edit-status{position:fixed;z-index:20;box-sizing:border-box;
-          color:#1D1D1F;font:400 13px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          color:#111110;font:400 13px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         html.editing #edit-bar{top:0;left:0;right:0;height:${BAR_H}px;display:flex;align-items:center;gap:4px;padding:0 12px 0 16px;
-          background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
-          border-bottom:1px solid rgba(0,0,0,.1)}
+          background:#fff;border-bottom:1px solid rgba(0,0,0,.14)}
         .e-name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
         #edit-bar button,.e-foot button,#edit-status button{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;min-width:30px;
-          padding:0 7px;border:0;border-radius:8px;background:none;color:#1D1D1F;font:500 13px/1 system-ui,sans-serif;cursor:pointer}
+          padding:0 7px;border:0;border-radius:3px;background:none;color:#111110;font:500 13px/1 system-ui,sans-serif;cursor:pointer}
         #edit-bar button:hover,.e-foot button:hover,#edit-status button:hover{background:rgba(0,0,0,.06)}
         .e-show svg{fill:currentColor}
         /* what New slide can add, under its button */
-        html.editing #edit-layouts{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,160px);gap:4px;box-sizing:border-box;padding:6px;border-radius:14px;
-          background:rgba(255,255,255,.9);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:#1D1D1F;
-          box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 8px 28px rgba(0,0,0,.2);font:500 13px/1 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-        #edit-layouts button{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+        html.editing #edit-layouts{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,160px);gap:4px;box-sizing:border-box;padding:6px;border-radius:4px;
+          background:#fff;color:#111110;
+          box-shadow:0 0 0 1px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.12);font:500 13px/1 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        #edit-layouts button{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:3px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
         #edit-layouts button:hover{background:rgba(0,0,0,.06)}
         .e-tools,.e-ask-tools,.e-slide-tools{display:flex;align-items:center;gap:2px;margin-right:8px;padding-right:8px;border-right:1px solid rgba(0,0,0,.1)}
-        .e-tools-label{margin:0 6px;color:#6E6E73;font-size:12px}
-        .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:9px;background:rgba(0,0,0,.06)}
+        .e-tools-label{margin:0 6px;color:#6B6B66;font:500 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+        .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
         #edit-bar .e-mode button{height:26px}
-        #edit-bar .e-mode button[aria-pressed=true]{background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.14)}
+        #edit-bar .e-mode button[aria-pressed=true]{background:#111110;color:#fff}
         #edit-bar button:disabled,.e-foot button:disabled{opacity:.4;pointer-events:none}
         html.editing #edit-rail{display:block;top:${BAR_H}px;left:0;bottom:${STATUS_H}px;width:${RAIL_W}px;overflow:auto;padding:12px 14px 12px 6px;
-          background:#FBFBFD;border-right:1px solid rgba(0,0,0,.1)}
+          background:#FAFAF8;border-right:1px solid rgba(0,0,0,.1)}
         .e-thumb{position:relative;display:grid;grid-template-columns:22px 1fr;align-items:start;margin-bottom:12px;cursor:pointer}
-        .e-thumb-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;box-sizing:border-box;padding:0 5px;border-radius:9px;background:#007AFF;
+        .e-thumb-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;box-sizing:border-box;padding:0 5px;border-radius:2px;background:#111110;
           color:#fff;font:600 11px/18px system-ui,sans-serif;text-align:center;font-variant-numeric:tabular-nums}
-        .e-thumb-n{padding:1px 7px 0 0;color:#6E6E73;font-size:11px;font-variant-numeric:tabular-nums;text-align:right}
-        .e-thumb-frame{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1)}
-        .e-thumb:hover .e-thumb-frame{box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-        .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2.5px #007AFF}
-        .e-thumb.e-cur .e-thumb-n{color:#1D1D1F;font-weight:600}
+        .e-thumb-n{padding:2px 7px 0 0;color:#6B6B66;font:400 10px/1.4 system-ui,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+        .e-thumb-frame{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.14)}
+        .e-thumb:hover .e-thumb-frame{box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+        .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2px #111110}
+        .e-thumb.e-cur .e-thumb-n{color:#111110;font-weight:600}
         .e-thumb iframe,#edit-layouts iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
-        .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:50%;
-          background:rgba(255,255,255,.9);color:#1D1D1F;box-shadow:0 0 0 .5px rgba(0,0,0,.2);cursor:pointer;opacity:0}
+        .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:2px;
+          background:#fff;color:#111110;box-shadow:0 0 0 1px rgba(0,0,0,.2);cursor:pointer;opacity:0}
         /* the count of suggestions has the corner */
         .e-thumb-count:not([hidden])~.e-thumb-del{right:18px}
         .e-thumb:hover .e-thumb-del{opacity:1}
-        .e-thumb-del:hover{background:#fff}
+        .e-thumb-del:hover{background:#111110;color:#fff}
         #edit-rail:is(.e-suggest,.e-one) .e-thumb-del{display:none}
         /* where a dragged thumbnail will land: in the gap above this one, or below the last */
-        .e-drop::before,.e-drop-end::after{content:"";position:absolute;left:22px;right:0;height:3px;border-radius:2px;background:#007AFF}
+        .e-drop::before,.e-drop-end::after{content:"";position:absolute;left:22px;right:0;height:2px;background:#111110}
         .e-drop::before{top:-8px}
         .e-drop-end::after{bottom:-8px}
         html.editing #notes{position:fixed;z-index:10;left:var(--edit-rail);right:var(--edit-pane);bottom:${STATUS_H}px;height:${NOTES_H}px;max-height:none;box-sizing:border-box;
-          padding:12px 20px;background:#fff;color:#1D1D1F;border-top:1px solid rgba(0,0,0,.1);font:400 13px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+          padding:12px 20px;background:#fff;color:#111110;border-top:1px solid rgba(0,0,0,.1);font:400 13px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         html.editing #notes[contenteditable=true]{outline:none;cursor:text}
-        html.editing #notes::before{margin-bottom:8px;font:600 12px/1 system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#6E6E73}
+        html.editing #notes::before{margin-bottom:10px;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6B6B66}
         html.editing #edit-status{left:0;right:0;bottom:0;height:${STATUS_H}px;display:flex;align-items:center;justify-content:space-between;
-          padding:0 6px 0 16px;background:#F5F5F7;border-top:1px solid rgba(0,0,0,.1);color:#6E6E73;font-size:12px}
-        #edit-status button{height:24px;min-width:24px;padding:0 4px;color:#6E6E73}
+          padding:0 6px 0 16px;background:#EFEFEC;border-top:1px solid rgba(0,0,0,.1);color:#6B6B66;font-size:12px}
+        #edit-status button{height:24px;min-width:24px;padding:0 4px;color:#6B6B66}
         #edit-status button[aria-pressed=false]{color:#AEAEB2}
         .e-status-buttons{display:flex;gap:2px}
         html.editing #edit{top:${BAR_H}px;right:0;bottom:${STATUS_H}px;width:${PANE_W}px;display:flex;flex-direction:column;
-          background:#FBFBFD;border-left:1px solid rgba(0,0,0,.1)}
+          background:#FAFAF8;border-left:1px solid rgba(0,0,0,.1)}
         .e-pane{flex:1;min-height:0;display:flex;flex-direction:column}
-        .e-head{flex:none;display:flex;align-items:center;gap:6px;padding:14px 16px 10px;font-weight:600}
-        .e-head svg{color:#6E6E73}
-        .e-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 28px;color:#6E6E73;text-align:center}
+        .e-head{flex:none;display:flex;align-items:center;gap:8px;padding:14px 16px 12px;border-bottom:1px solid rgba(0,0,0,.1);font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+        .e-head svg{color:#6B6B66}
+        .e-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 28px;color:#6B6B66;text-align:center}
         .e-list{flex:1;min-height:0;overflow:auto;padding-bottom:8px}
         /* one label per slide, then its suggestions as rows: click one to edit it, remove on hover */
         .e-go,.e-slide{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px 16px 4px;border:0;border-top:1px solid rgba(0,0,0,.08);
-          background:none;color:#6E6E73;font:600 12px/1.4 system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;
+          background:none;color:#6B6B66;font:600 12px/1.4 system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;
           text-overflow:ellipsis;cursor:pointer}
         .e-go:first-child,.e-slide:first-child{margin-top:0;border-top:0}
-        .e-go:hover,.e-go.e-cur,.e-slide:hover,.e-slide.e-cur{color:#1D1D1F}
-        .e-change{position:relative;margin:0 8px;padding:8px 32px 8px 8px;border-radius:8px;cursor:pointer}
+        .e-go:hover,.e-go.e-cur,.e-slide:hover,.e-slide.e-cur{color:#111110}
+        .e-change{position:relative;margin:0 8px;padding:8px 32px 8px 8px;border-radius:3px;cursor:pointer}
         .e-change:hover{background:rgba(0,0,0,.05)}
         .e-change-warn{color:#C93400;font-size:12px}
-        .e-item{position:relative;display:grid;grid-template-columns:26px 1fr;margin:0 8px;padding:8px 32px 8px 8px;border-radius:8px;cursor:pointer}
+        .e-item{position:relative;display:grid;grid-template-columns:26px 1fr;margin:0 8px;padding:8px 32px 8px 8px;border-radius:3px;cursor:pointer}
         .e-item:hover,.e-item.e-lit{background:rgba(0,0,0,.05)}
-        .e-n{grid-row:1/3;font:600 12px/1.6 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#AEAEB2}
+        .e-n{grid-row:1/3;font:600 11px/1.7 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#AEAEB2}
         .e-cur .e-n{color:#007AFF}
         .e-note{white-space:pre-wrap;overflow-wrap:anywhere}
-        .e-note:empty::before{content:"Describe the change";color:#6E6E73}
-        .e-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6E6E73;font-size:12px}
-        .e-del,.e-change-del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;
-          color:#6E6E73;cursor:pointer;opacity:0}
+        .e-note:empty::before{content:"Describe the change";color:#6B6B66}
+        .e-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6B6B66;font-size:12px}
+        .e-del,.e-change-del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:0;border-radius:2px;background:none;
+          color:#6B6B66;cursor:pointer;opacity:0}
         .e-item:hover .e-del,.e-change:hover .e-change-del,.e-change-del.e-armed{opacity:1}
-        .e-del:hover,.e-change-del:hover{background:rgba(0,0,0,.08);color:#1D1D1F}
-        .e-changed{margin-right:6px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.07);color:#3A3A3C;font-weight:500}
+        .e-del:hover,.e-change-del:hover{background:rgba(0,0,0,.08);color:#111110}
+        .e-changed{margin-right:6px;padding:1px 6px;border-radius:2px;background:rgba(0,0,0,.07);color:#3A3A3C;font-weight:500}
         .e-foot{flex:none;display:flex;padding:8px 10px;border-top:1px solid rgba(0,0,0,.1)}
         .e-foot .e-clear,.e-foot .e-clear-edits{margin-left:auto}
-        .e-foot .e-copy{padding:0 12px;background:#007AFF;color:#fff}
-        .e-foot .e-copy:hover{background:#0068D9}
+        .e-foot .e-copy{padding:0 12px;background:#111110;color:#fff}
+        .e-foot .e-copy:hover{background:#3A3A37}
         /* the box that opens beside a selection: what it is about, the field, delete and save */
-        #edit-ask{position:fixed;z-index:30;width:380px;box-sizing:border-box;padding:12px 14px 10px;border-radius:14px;background:rgba(255,255,255,.9);
-          -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:#1D1D1F;
-          box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 16px 48px rgba(0,0,0,.28);font:400 14px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-        .e-ask-path{overflow:hidden;white-space:pre;text-overflow:ellipsis;color:#6E6E73;font-size:12px}
+        #edit-ask{position:fixed;z-index:30;width:380px;box-sizing:border-box;padding:12px 14px 10px;border-radius:4px;background:#fff;color:#111110;
+          box-shadow:0 0 0 1px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.16);font:400 14px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        .e-ask-path{overflow:hidden;white-space:pre;text-overflow:ellipsis;color:#6B6B66;font-size:12px}
         .e-crumb{padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
         .e-crumb:hover{color:#007AFF}
-        .e-crumb.e-at{color:#1D1D1F;font-weight:600}
+        .e-crumb.e-at{color:#111110;font-weight:600}
         #edit-ask textarea{display:block;width:100%;max-height:180px;box-sizing:border-box;margin:8px 0 6px;padding:2px 0;border:0;outline:none;
-          background:none;color:#1D1D1F;font:inherit;resize:none}
-        #edit-ask textarea::placeholder{color:#6E6E73}
+          background:none;color:#111110;font:inherit;resize:none}
+        #edit-ask textarea::placeholder{color:#6B6B66}
         .e-ask-foot{display:flex;justify-content:flex-end;align-items:center;gap:6px}
-        .e-ask-foot button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;cursor:pointer}
-        .e-ask-del{background:none;color:#6E6E73}
-        .e-ask-del:hover{background:rgba(0,0,0,.06);color:#1D1D1F}
-        .e-ask-send{background:#007AFF;color:#fff}
+        .e-ask-foot button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:3px;cursor:pointer}
+        .e-ask-del{background:none;color:#6B6B66}
+        .e-ask-del:hover{background:rgba(0,0,0,.06);color:#111110}
+        .e-ask-send{background:#111110;color:#fff}
         #edit-ask .e-ask-send:disabled{background:#D1D1D6;cursor:default}
       }
       @media print{#edit,#edit-bar,#edit-rail,#edit-status,#edit-layer,#edit-ask,#edit-layouts{display:none}}`;

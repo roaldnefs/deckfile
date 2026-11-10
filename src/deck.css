@@ -1,7 +1,7 @@
 /*! deckfile v0.2.0 · engine styles · MIT License · https://github.com/roaldnefs/deckfile
   What the engine needs to place, show and print slides. The look of the slides is the theme's. */
 
-/* ---------- stage: fixed 1920x1080, scaled to the viewport (--scale is set by the engine) ---------- */
+/* stage: fixed 1920x1080, scaled to the viewport (--scale is set by the engine) */
 html,body{margin:0;height:100%;overflow:hidden}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;
   transform:translate(-50%,-50%) scale(var(--scale,1))}
@@ -10,16 +10,16 @@ html,body{margin:0;height:100%;overflow:hidden}
 @media screen{.slide:not(.current){display:none!important}}
 .s-notes{display:none}
 
-/* ---------- builds: hidden until the engine adds .on ---------- */
+/* builds: hidden until the engine adds .on */
 .build{opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease}
 .build.on{opacity:1;transform:none}
 
-/* ---------- speaker notes: placed by the presenter and edit views ---------- */
+/* speaker notes: placed by the presenter and edit views */
 #notes{overflow:auto}
 #notes::before{content:"Speaker notes";display:block}
 [hidden]{display:none!important}
 
-/* ---------- back, presenter, edit, shortcuts and forward: light grey, near the bottom-left corner only, readable on any slide ---------- */
+/* back, presenter, edit, shortcuts and forward: light grey, near the bottom-left corner only, readable on any slide */
 #deck-controls{position:fixed;left:20px;bottom:20px;z-index:15;display:flex;gap:2px;padding:4px;border-radius:999px;
   background:rgba(229,229,234,.85);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   opacity:0;pointer-events:none;transition:opacity .15s ease}
@@ -35,7 +35,7 @@ html.editing #deck-controls{display:none}
 .c-keys span{min-width:12px;padding:3px 7px;border:1px solid rgba(0,0,0,.12);border-bottom-width:2px;border-radius:6px;background:#fff;
   font-weight:500;font-size:12px;text-align:center}
 
-/* ---------- print: one slide per page, all builds shown ---------- */
+/* print: one slide per page, all builds shown */
 @media print{
   html,body{overflow:visible;height:auto;background:#fff}
   #stage{position:static;transform:none;width:1920px;height:auto}

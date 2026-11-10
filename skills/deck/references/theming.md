@@ -40,7 +40,7 @@ not even as a fallback. Fallbacks are generic CSS families only (`ui-serif`, `se
 operating-system font.
 
 To swap fonts:
-1. Edit the Google Fonts `<link>` in `<head>` (`family=Name:wght@300;400;600;700`).
+1. Edit the Google Fonts `<link>` in `<head>` (`family=Name:wght@400..700` for a variable font, or the weights it has: `wght@400;600;700`).
 2. Set the token: `--font-display:"Name",system-ui,sans-serif;`
 
 The deck must still look acceptable offline, when only the fallback renders.

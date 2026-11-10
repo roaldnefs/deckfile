@@ -1,11 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 32 32" role="img" aria-label="deckfile icon: two stacked white slides on a blue tile">
-  <defs>
-    <linearGradient id="tile" x2="0" y2="1">
-      <stop stop-color="#2997FF"/>
-      <stop offset="1" stop-color="#0060D0"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="7.5" fill="url(#tile)"/>
-  <rect x="10.5" y="7.5" width="15" height="10" rx="2" fill="#fff" opacity=".55"/>
-  <rect x="6.5" y="12.5" width="18" height="12" rx="2.25" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 32 32" role="img" aria-label="deckfile icon: two stacked white slides on a vermilion tile">
+  <rect width="32" height="32" rx="4" fill="#C2310A"/>
+  <rect x="10.5" y="7.5" width="15" height="10" rx="1" fill="#fff" opacity=".55"/>
+  <rect x="6.5" y="12.5" width="18" height="12" rx="1" fill="#fff"/>
 </svg>

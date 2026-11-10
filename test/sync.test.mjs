@@ -8,6 +8,11 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '..');
 const read = f => readFileSync(path.join(root, f), 'utf8');
 const TEMPLATES = ['template.html', 'skills/deck/assets/template.html'];
+// the class names in the selectors of src/theme.css
+const themeClasses = () => {
+  const css = read('src/theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  return new Set([...css.matchAll(/([^{}]+)\{/g)].flatMap(m => [...m[1].matchAll(/\.([a-zA-Z][\w-]*)/g)].map(c => c[1])));
+};
 
 test('the templates carry the current engine', () => {
   const r = spawnSync(process.execPath, [path.join(root, 'bin/deckfile.mjs'), 'update', '--check', ...TEMPLATES],
@@ -26,8 +31,7 @@ test('the template theme is src/theme.css', () => {
 });
 
 test('the template shows everything in the theme: no class is left without a slide', () => {
-  const css = read('src/theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const classes = new Set([...css.matchAll(/([^{}]+)\{/g)].flatMap(m => [...m[1].matchAll(/\.([a-zA-Z][\w-]*)/g)].map(c => c[1])));
+  const classes = themeClasses();
   const html = read('template.html');
   const slides = html.slice(html.indexOf('<div id="stage">\n'), html.indexOf('<script data-deck="engine">\n'));
   const used = new Set([...slides.matchAll(/class="([^"]*)"/g)].flatMap(m => m[1].split(/\s+/)));
@@ -40,8 +44,7 @@ test('the template offers its layouts, built from what the theme has', () => {
   const block = read('template.html').match(/<template data-deck="layouts">\n([\s\S]*?)<\/template>/);
   assert.ok(block, 'no <template data-deck="layouts"> block');
   assert.deepEqual([...block[1].matchAll(/data-layout="([^"]*)"/g)].map(m => m[1]), ['Title', 'Content', 'Two columns', 'Section']);
-  const css = read('src/theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const theme = new Set([...css.matchAll(/([^{}]+)\{/g)].flatMap(m => [...m[1].matchAll(/\.([a-zA-Z][\w-]*)/g)].map(c => c[1])));
+  const theme = themeClasses();
   const missing = [...block[1].matchAll(/class="([^"]*)"/g)].flatMap(m => m[1].split(/\s+/)).filter(c => !theme.has(c));
   assert.deepEqual(missing, []);
 });

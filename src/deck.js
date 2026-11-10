@@ -2,20 +2,10 @@
   A presentation as one self-contained HTML file: no build step, no dependencies, opens offline from file://.
 
   Keys:  → / Space / PgDn  next build or slide     ← / PgUp  previous
-         ↓ next slide, all builds shown            ↑ previous slide, all builds shown
+         ↓ / ↑  next / previous slide, all builds shown
+         Home / End  first / last slide
          F fullscreen   P print to PDF
-         S presenter view: a second window with current slide, next build or slide, notes (A− / A+), timer (pause, reset)
-           and clock; steer from either window; drag the bars between the panes to resize them
-         E edit view: thumbnails, slide, notes and suggestions, in one of two modes.
-           Edit changes the deck: click an element to select it, then delete, duplicate or move it with the toolbar;
-           double-click text to type in it (Enter keeps it, Esc takes it back); type in the notes; the toolbar adds a slide, from a menu of the deck's layouts, and
-           duplicates or deletes this one; drag a thumbnail or press Cmd/Ctrl+↑ ↓ to move one, × on a thumbnail deletes one;
-           Cmd/Ctrl+Z undoes, and
-           Save or Cmd/Ctrl+S writes the file. The side pane lists the edits not saved yet.
-           Suggest changes nothing: click an element to outline it and suggest a change, its levels in the box (or ↑ ↓ while
-           it is empty) to widen that, the background to pin a spot, or drag to box an area, then Copy prompt for all of
-           them. Suggestions follow their element when the deck changes, or get flagged
-         Home / End first / last slide             Esc drop the selection, or else leave the edit view
+         S presenter view, in a second window     E edit view     Esc leave the edit view
          click / tap: left 30 % of the screen back, the rest forward · swipe left / right on touch
          pointer near the bottom-left corner: buttons for back, the presenter view, the edit view, the shortcuts and forward
 
@@ -25,14 +15,16 @@
     class="build" on any element        revealed one at a time with →
     data-auto="500" on a section       its builds reveal by themselves, one every 500 ms
   The engine sets .current on the slide shown, .on on each build revealed, and adds a <span class="counter"> to every slide.
-  URL: ?print opens the print dialog once loaded; ?presenter and ?view are the presenter window and its slide panes.
+  URL: ?print opens the print dialog once loaded; ?presenter is the presenter window; ?view is one read-only slide, used
+  for the presenter's panes and the edit view's thumbnails and layout previews.
+  The README describes the presenter and edit views.
 */
 (() => {
   const slides = [...document.querySelectorAll('.slide')];
-  // the speaker notes and the timer: the presenter and edit views place the notes, the presenter view the timer
+  // made here, placed by the presenter and edit views
   const notes = Object.assign(document.body.appendChild(document.createElement('div')), { id: 'notes', hidden: true });
   const timer = Object.assign(document.createElement('div'), { id: 'timer', textContent: '00:00' });
-  // ?presenter is the speaker window that S opens, ?view is one read-only slide inside it; anything else is the deck
+  // ?presenter is the window that S opens, ?view is one read-only slide in an iframe; anything else is the deck
   const params = new URLSearchParams(location.search);
   const mode = params.has('presenter') ? 'presenter' : params.has('view') ? 'view' : 'deck';
   const here = location.href.split(/[?#]/)[0];
@@ -43,23 +35,29 @@
     get: (key = KEY) => { try { return sessionStorage.getItem(key); } catch { return null; } },
     set: (v, key = KEY) => { try { sessionStorage.setItem(key, v); } catch {} }
   };
+  const local = {
+    get: key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+    set: (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
+  };
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const builds = s => [...s.querySelectorAll('.build')];
   let i = Math.min(+store.get() || 0, slides.length - 1);
   let autoTimer = null;
   let presenterWin = null;  // deck: the presenter window, once it has said hello
   let pv = null;            // presenter: its panes and labels
   let editing = false;      // deck: edit mode (E) is on
-  let suggesting = store.get(MODE_KEY) === 'suggest';  // deck: a click on the slide suggests a change, it does not change it
-  const elementIds = new WeakMap();  // deck: the number that says an element and its copies are the same one; see twin
+  let suggesting = store.get(MODE_KEY) === 'suggest';  // deck: the edit view is in Suggest mode
+  const elementIds = new WeakMap();  // deck: an id shared by an element and its copies; see twin
   let lastElementId = 0;
-  const leads = new WeakMap();  // deck: the white space and comment before each slide, kept while it is not in the deck
-  const HOME = Symbol('home');  // deck: the slide a suggestion is on, on the suggestion but not in what is stored of it
+  const leads = new WeakMap();  // deck: the whitespace and comment before each slide, kept while the slide is out of the deck
+  const HOME = Symbol('home');  // deck: key for the slide a suggestion belongs to; a symbol, so it stays out of localStorage
   let ed = null;            // deck: the edit panel, overlay and suggestions, built the first time E is pressed
   // the edit view's panes around the slide, in px
   const RAIL_W = 216, PANE_W = 320, BAR_H = 52, STATUS_H = 32, NOTES_H = 160, GAP = 24;
   let railOn = true, paneOn = true;  // the side panes of the edit view are showing
+  const OFF_SLIDE = '.counter, .s-notes';  // inside a slide, but not part of what it shows
 
-  // every slide says where it is, in a counter of the engine's as its last child
+  // the slide number, in a <span class="counter"> the engine appends to every slide
   function renumber() {
     slides.forEach((s, k) => {
       const c = s.querySelector(':scope > .counter:last-child') || s.appendChild(Object.assign(document.createElement('span'), { className: 'counter' }));
@@ -72,13 +70,13 @@
     notes.innerHTML = slides[i].querySelector('.s-notes')?.innerHTML || '<em>No notes for this slide.</em>';
   }
   function show(n, built = false) {
-    built ||= editing;  // edit mode shows every slide fully built, so you mark what will be there
-    if (ed) {  // first, as text being typed needs the layer back, and the notes pane is about to change
+    built ||= editing;  // the edit view shows every slide with all its builds
+    if (ed) {  // commit what is being typed before the slide and the notes pane change
       settle();
       select(null);
     }
     clearTimeout(autoTimer);
-    i = Math.max(0, Math.min(n, slides.length - 1));
+    i = clamp(n, 0, slides.length - 1);
     slides.forEach((s, k) => s.classList.toggle('current', k === i));
     builds(slides[i]).forEach(b => b.classList.toggle('on', built));
     if (mode === 'deck') store.set(i);
@@ -142,7 +140,7 @@
   let t0 = null;
   let paused = null;  // when the timer was paused, or null while it runs
   const pad = n => String(n).padStart(2, '0');
-  // the icons of the edit and presenter views, drawn on a 16 px grid
+  // icon paths, on a 16 px grid
   const ICONS = {
     play: 'M5 3.2v9.6L12.8 8z', pause: 'M5.5 3.5v9M10.5 3.5v9', reset: 'M3 8a5 5 0 1 0 1.5-3.5L3 6V2.5M3 6h3.5',
     back: 'M10 3 5 8l5 5', forward: 'm6 3 5 5-5 5', up: 'M8 13V3M3.5 7.5 8 3l4.5 4.5', close: 'M4 4l8 8M12 4l-8 8',
@@ -159,7 +157,7 @@
   };
   const icon = (name, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" ` +
     `stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
-  // a button that is only an icon, its name on hover; one with its name beside the icon
+  // an icon-only button, and one with its label beside the icon
   const tool = (cls, label, name, size) => `<button type="button" class="${cls}" aria-label="${label}" title="${label}">${icon(name, size)}</button>`;
   const labelled = (cls, label, name, title) => `<button type="button" class="${cls}"${title ? ` title="${title}"` : ''}>${icon(name)}<span>${label}</span></button>`;
   function tick() {
@@ -222,7 +220,7 @@
   }
   addEventListener('keydown', e => {
     const typing = e.target.closest('textarea') || e.target.isContentEditable;
-    // the edit view's own: Save, and Undo unless the browser is undoing what is being typed
+    // edit view shortcuts; while text is being typed, Cmd/Ctrl+Z and the arrows are left to the browser
     if (editing && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
       const key = e.key.toLowerCase();
       if (key === 's') { e.preventDefault(); saveDeck(); }
@@ -247,8 +245,7 @@
       // the heartbeat repeats the state every 2 s; only redraw when it changed
       if (!pv.last || pv.last[0] !== m.i || pv.last[1] !== m.k) render(m.i, m.k);
     } else if (mode === 'view' && m.deck === 'view' && e.source === parent) {
-      // the edit view sends a thumbnail its slide as it is now, in the place of one of the file's; only a page of this
-      // deck's own origin may set its contents
+      // the edit view sends a thumbnail the current HTML of its slide; only accepted from this deck's own origin
       if (m.html !== undefined && e.origin === self.origin) {
         const t = document.createElement('template');
         t.innerHTML = m.html;
@@ -334,7 +331,7 @@
   addEventListener('resize', fit);
   fit();
   show(i);
-  // opened as index.html?print (the landing page's Print button): print once images and fonts are in
+  // ?print: print once images and fonts are in
   if (params.has('print')) addEventListener('load', () => document.fonts.ready.then(() => print()));
 
   // presenter window: current slide, next slide, notes and timer; both slides are this file opened as ?view
@@ -344,7 +341,7 @@
       @media screen{
         html.presenter,html.presenter body{background:#1C1C1E}
         html.presenter #stage{display:none}
-        /* PowerPoint's Presenter View in the manner of macOS: timer on top, current slide left, next slide above the notes right */
+        /* timer on top, current slide left, next slide above the notes right */
         #presenter{position:fixed;inset:0;box-sizing:border-box;padding:12px 20px 16px;display:grid;row-gap:12px;
           grid-template:"top top top" auto "cur vbar side" minmax(0,1fr) / minmax(0,var(--cur-w,62%)) 20px minmax(0,1fr);
           color:#F5F5F7;font:400 15px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -398,12 +395,11 @@
     const ui = document.createElement('div');
     ui.id = 'presenter';
     ui.innerHTML =
-      `<div class="p-top"><button type="button" class="p-pause" aria-label="Pause or resume the timer" title="Pause or resume the timer">${icon('play')}</button>` +
-      `<button type="button" class="p-reset" aria-label="Reset the timer" title="Reset the timer">${icon('reset')}</button>` +
+      '<div class="p-top">' + tool('p-pause', 'Pause or resume the timer', 'play') + tool('p-reset', 'Reset the timer', 'reset') +
       '<div class="p-link" hidden>Not linked: press S in the deck window</div><span class="p-clock"></span></div>' +
       '<div class="p-cur"><div class="p-slide"><iframe tabindex="-1" title="Current slide"></iframe></div>' +
-      `<div class="p-nav"><div class="p-ctl"><button type="button" class="p-back" aria-label="Previous" title="Previous">${icon('back', 18)}</button>` +
-      `<div class="p-count"></div><button type="button" class="p-fwd" aria-label="Next" title="Next">${icon('forward', 18)}</button></div>` +
+      '<div class="p-nav"><div class="p-ctl">' + tool('p-back', 'Previous', 'back', 18) +
+      '<div class="p-count"></div>' + tool('p-fwd', 'Next', 'forward', 18) + '</div>' +
       '<div class="p-left"></div></div></div>' +
       '<div class="p-vbar" title="Drag to resize, double-click to reset"></div>' +
       '<div class="p-side"><div class="p-label">Next slide</div>' +
@@ -431,26 +427,26 @@
     $('.p-reset').addEventListener('click', resetTimer);
 
     // notes size, remembered in this browser
-    const SIZES = [16, 18, 20, 24, 28, 32, 40];
-    let size = SIZES.indexOf(24);
-    try { const s = SIZES.indexOf(+localStorage.getItem('deck:presenter-notes-size')); if (s >= 0) size = s; } catch {}
+    const SIZES = [16, 18, 20, 24, 28, 32, 40], SIZE_KEY = 'deck:presenter-notes-size';
+    let size = SIZES.indexOf(local.get(SIZE_KEY));
+    if (size < 0) size = SIZES.indexOf(24);
     const resize = d => {
-      size = Math.max(0, Math.min(SIZES.length - 1, size + d));
+      size = clamp(size + d, 0, SIZES.length - 1);
       notes.style.fontSize = SIZES[size] + 'px';
-      try { localStorage.setItem('deck:presenter-notes-size', SIZES[size]); } catch {}
+      local.set(SIZE_KEY, SIZES[size]);
     };
     ui.querySelectorAll('.p-size button').forEach((b, n) => b.addEventListener('click', () => resize(n ? 1 : -1)));
     resize(0);
 
     // drag the bars between the panes to resize them, double-click a bar to reset it; remembered like the notes size
-    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-    let layout = { w: 62, h: 0 };  // current slide: % of the width; next slide: vh, 0 = as tall as 16:9 needs
-    try { const l = JSON.parse(localStorage.getItem('deck:presenter-layout')) || {}; layout = { w: clamp(+l.w || 62, 25, 80), h: +l.h ? clamp(+l.h, 15, 75) : 0 }; } catch {}
+    const LAYOUT_KEY = 'deck:presenter-layout', SPLIT = 62, was = local.get(LAYOUT_KEY) || {};
+    // current slide: % of the width; next slide: vh, 0 = as tall as 16:9 needs
+    const layout = { w: clamp(+was.w || SPLIT, 25, 80), h: +was.h ? clamp(+was.h, 15, 75) : 0 };
     const relayout = () => {
       ui.style.setProperty('--cur-w', layout.w + '%');
       ui.style.setProperty('--next-h', layout.h + 'vh');
       ui.classList.toggle('sized', layout.h > 0);
-      try { localStorage.setItem('deck:presenter-layout', JSON.stringify(layout)); } catch {}
+      local.set(LAYOUT_KEY, layout);
     };
     const bar = (el, move, reset) => {
       el.addEventListener('pointerdown', e => {
@@ -471,7 +467,7 @@
       el.addEventListener('dblclick', () => { reset(); relayout(); });
     };
     // the pointer stays on the middle of the 20 px bar, past the 20 px padding
-    bar($('.p-vbar'), ev => { layout.w = clamp((ev.clientX - 30) / (ui.clientWidth - 40) * 100, 25, 80); }, () => { layout.w = 62; });
+    bar($('.p-vbar'), ev => { layout.w = clamp((ev.clientX - 30) / (ui.clientWidth - 40) * 100, 25, 80); }, () => { layout.w = SPLIT; });
     bar($('.p-hbar'), ev => { layout.h = clamp((ev.clientY - 10 - pv.next.parentElement.getBoundingClientRect().top) / innerHeight * 100, 15, 75); }, () => { layout.h = 0; });
     relayout();
     document.body.append(ui);
@@ -489,11 +485,7 @@
     status();
   }
 
-  // edit view (E, deck window only), laid out like PowerPoint's Normal view: thumbnails left, the slide with its notes below,
-  // unsaved edits or suggestions right, by mode. The cursor outlines the element under it. In Edit a click selects it, for the
-  // buttons in the toolbar, and a double-click types in it; Save writes the deck to its file. In Suggest click it, or click the background to pin a
-  // spot, or drag to box an area, and type the suggestion in the box that opens beside it. Copy prompt puts them all on the
-  // clipboard as one prompt. Suggestions are kept per deck in this browser.
+  // edit view (E, deck window only): thumbnails left, the slide with its notes below, unsaved edits or suggestions right
   function edit(on) {
     if (!ed) buildEdit();
     if (!on) {
@@ -510,7 +502,6 @@
     if (on) show(i, true);
     else closeAsk();
   }
-  // the look of the edit view
   function editCss() {
     return `
       @media screen{
@@ -539,7 +530,7 @@
         /* its element is gone or changed */
         .e-box.e-stale{border-style:dashed;border-color:#8E8E93}
         .e-mark.e-stale span{background:radial-gradient(circle,#fff 0 11px,#8E8E93 11.5px)}
-        /* the panes: light, hairlines and borderless controls in the manner of macOS, in the system's font whatever the deck's fonts are */
+        /* the panes use the system font, whatever the deck's fonts are */
         html.editing #edit-bar,html.editing #edit-rail,html.editing #edit,html.editing #edit-status{position:fixed;z-index:20;box-sizing:border-box;
           color:#1D1D1F;font:400 13px/1.4 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         html.editing #edit-bar{top:0;left:0;right:0;height:${BAR_H}px;display:flex;align-items:center;gap:4px;padding:0 12px 0 16px;
@@ -693,19 +684,19 @@
     const layouts = deckLayouts(), menu = layoutMenu(layouts);
     const $ = s => panel.querySelector(s);
     ed = { layer, menu, marks: layer.firstChild, draft: layer.children[1], hover: layer.lastChild, list: $('.e-list'), empty: $('.e-empty'), copy: $('.e-copy'),
-      clear: $('.e-clear'), undo: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
-      send: ask.querySelector('.e-ask-send'), open: null, key: 'deck:edit:' + location.pathname, items: [],
-      outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undoButton: bar.querySelector('.e-do-undo'),
+      clear: $('.e-clear'), undoSuggestions: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
+      send: ask.querySelector('.e-ask-send'), open: null, chain: [], level: 0, saved: [], undoTimer: null, key: 'deck:edit:' + location.pathname, items: [],
+      outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undo: bar.querySelector('.e-do-undo'),
       save: bar.querySelector('.e-save'), sel: null, typing: null, seq: 0, done: [], unsaved: [], file: null, notesWere: '', slideLabels: [], add: bar.querySelector('.e-do-add'), dropSlide: bar.querySelector('.e-do-drop-slide'),
       askTools: bar.querySelector('.e-ask-tools'), panes: [$('.e-edits'), $('.e-suggestions')], editList: $('.e-edits-list'), editEmpty: $('.e-edits-empty'), editClear: $('.e-clear-edits') };
-    ed.undo.hidden = true;
+    ed.undoSuggestions.hidden = true;
     matchThumbs();
     wireThumbDrag();
     // a suggestion still empty when the page went away is not kept
     try { ed.items = (JSON.parse(localStorage.getItem(ed.key)) || []).filter(s => s.note.trim()); } catch {}
     // the deck may have changed since they were made
     relocate();
-    saveEdit();
+    saveSuggestions();
 
     wireComposer();
     // a press anywhere else closes the composer too, and keeps what is being typed in the slide or the notes
@@ -749,7 +740,7 @@
       '.e-present': () => act('s')
     };
     for (const [selector, fn] of Object.entries(clicks)) bar.querySelector(selector).addEventListener('click', fn);
-    ed.undoButton.disabled = true;
+    ed.undo.disabled = true;
     status.querySelector('.e-notes').addEventListener('click', () => act('n'));
     // a side pane folds away, and the slide takes its room; for this visit only
     const togglePane = (button, pane, set) => button.addEventListener('click', () => {
@@ -760,12 +751,12 @@
     });
     togglePane(status.querySelector('.e-toggle-rail'), rail, on => { railOn = on; });
     togglePane(status.querySelector('.e-toggle-pane'), panel, on => { paneOn = on; });
-    ed.undo.addEventListener('click', () => {
+    ed.undoSuggestions.addEventListener('click', () => {
       ed.items = ed.saved;
       // the deck may have changed since
       relocate();
-      ed.undo.hidden = true;
-      saveEdit();
+      ed.undoSuggestions.hidden = true;
+      saveSuggestions();
       drawEdit();
     });
     ed.copy.addEventListener('click', () => copyText(editPrompt()).then(ok => {
@@ -785,7 +776,7 @@
     clickTwice(ed.clear, () => {
       offerUndo();
       ed.items = [];
-      saveEdit();
+      saveSuggestions();
       drawEdit();
     });
     // takes back every unsaved edit, and stays on this slide
@@ -797,7 +788,7 @@
     stage.append(layer);
     document.body.append(bar, rail, status, panel, ask, menu);
   }
-  // what New slide can add: the layouts in the deck, as they go with its theme, or else a plain slide
+  // the layouts New slide offers: those in the deck's <template data-deck="layouts">, or else one plain slide
   function deckLayouts() {
     const plain = document.createElement('template');
     plain.innerHTML = '<section class="slide">\n  <h2>New slide</h2>\n  <ul>\n    <li>First point</li>\n  </ul>\n</section>';
@@ -821,7 +812,7 @@
     }
     return menu;
   }
-  // a thumbnail dragged to a gap between others; anything else dragged here is none of the rail's business
+  // drag a thumbnail to a gap between the others; drags of anything else are ignored
   function wireThumbDrag() {
     const gapAt = y => {
       const n = ed.thumbs.findIndex(t => { const r = t.getBoundingClientRect(); return y < r.top + r.height / 2; });
@@ -853,7 +844,7 @@
   function wireComposer() {
     ed.ta.addEventListener('input', () => {
       ed.open.note = ed.ta.value;
-      saveEdit();
+      saveSuggestions();
       ed.list.querySelectorAll('.e-note')[ed.items.indexOf(ed.open)].textContent = ed.ta.value;
       ed.send.disabled = ed.askTools.lastChild.disabled = !ed.ta.value.trim();
       ed.copy.disabled = !ed.items.some(s => s.note.trim());
@@ -961,8 +952,8 @@
       document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
     });
   }
-  // the thumbnails go by place in the deck, and are sent what is there, so that they never move: an iframe that moves reloads.
-  // Each is this file opened as ?view, like the presenter's panes, loaded as it scrolls into sight
+  // A thumbnail stands for a position in the deck, not for a slide: when slides move, each iframe is sent the slide now at
+  // its position, because an iframe that moves in the DOM reloads. Each is this file opened as ?view, loaded lazily
   function addThumb() {
     const n = ed.thumbs.length, t = document.createElement('div');
     t.className = 'e-thumb';
@@ -992,39 +983,41 @@
     ed.rail.classList.toggle('e-one', slides.length < 2);
     ed.dropSlide.disabled = slides.length < 2;
   }
-  function saveEdit() { try { localStorage.setItem(ed.key, JSON.stringify(ed.items)); } catch {} }
+  function saveSuggestions() { local.set(ed.key, ed.items); }
   // before deleting: remember the suggestions, and offer them back for a few seconds
   function offerUndo() {
     ed.saved = ed.items.filter(s => s.note.trim()).map(s => ({ ...s }));
-    ed.undo.hidden = false;
+    ed.undoSuggestions.hidden = false;
     clearTimeout(ed.undoTimer);
-    ed.undoTimer = setTimeout(() => { ed.undo.hidden = true; }, 6000);
+    ed.undoTimer = setTimeout(() => { ed.undoSuggestions.hidden = true; }, 6000);
   }
   // the pointer, and an element's box, in the slide's 1920x1080 frame
+  function layerBox() {
+    const L = ed.layer.getBoundingClientRect();
+    return { L, k: L.width / 1920 };
+  }
   function at(e) {
-    const L = ed.layer.getBoundingClientRect(), k = L.width / 1920;
-    return { x: Math.round(Math.max(0, Math.min(1920, (e.clientX - L.left) / k))),
-      y: Math.round(Math.max(0, Math.min(1080, (e.clientY - L.top) / k))) };
+    const { L, k } = layerBox();
+    return { x: Math.round(clamp((e.clientX - L.left) / k, 0, 1920)), y: Math.round(clamp((e.clientY - L.top) / k, 0, 1080)) };
   }
   function frame(el) {
-    const L = ed.layer.getBoundingClientRect(), k = L.width / 1920, q = el.getBoundingClientRect();
+    const { L, k } = layerBox(), q = el.getBoundingClientRect();
     return { x: (q.left - L.left) / k, y: (q.top - L.top) / k, w: q.width / k, h: q.height / k };
   }
   function measure(el) {
     const f = frame(el);
     return { x: Math.round(f.x), y: Math.round(f.y), w: Math.round(f.w), h: Math.round(f.h) };
   }
-  // place a mark on the slide
   function outline(m, r) { m.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`; }
   // the deepest element of the current slide at a point of the window, or nothing on its background; a drawing counts as one
   function pick(x, y) {
-    const el = document.elementsFromPoint(x, y).find(e => slides[i].contains(e) && !e.closest('.counter, .s-notes'));
+    const el = document.elementsFromPoint(x, y).find(e => slides[i].contains(e) && !e.closest(OFF_SLIDE));
     return el === slides[i] ? null : el?.closest('svg') || el;
   }
   // text as written in the deck, not as styled: its text nodes joined by spaces, without the notes and the slide counter
   function textOf(el) {
     const c = el.cloneNode(true), w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT), t = [];
-    c.querySelectorAll('.s-notes, .counter').forEach(n => n.remove());
+    c.querySelectorAll(OFF_SLIDE).forEach(n => n.remove());
     while (w.nextNode()) t.push(w.currentNode.data);
     return t.join(' ').replace(/\s+/g, ' ').trim();
   }
@@ -1038,6 +1031,7 @@
     return '#stage > ' + steps.join(' > ');
   }
   const slideOf = el => slides.find(x => x.contains(el));
+  const ownClasses = el => [...el.classList].filter(c => c !== 'on' && c !== 'current');
   function headingOf(slide) {
     const h = slide.querySelector('h1, h2, h3, blockquote');
     return h ? clip(textOf(h), 60) : '';
@@ -1049,7 +1043,7 @@
     clone.querySelectorAll('.counter').forEach(c => c.remove());
     [clone, ...clone.querySelectorAll('.on, .current')].forEach(c => c.classList.remove('on', 'current'));
     return { heading: headingOf(slideOf(el)), whole: slides.includes(el), path: pathOf(el),
-      el: el.localName + [...el.classList].filter(c => c !== 'on' && c !== 'current').map(c => '.' + c).join(''),
+      el: el.localName + ownClasses(el).map(c => '.' + c).join(''),
       text: clip(textOf(el), 80), html: clip(clone.outerHTML.replace(/ class=""/g, ''), 800) };
   }
   // is this element, or slide, still what the suggestion was about?
@@ -1057,9 +1051,9 @@
     if (s.whole) return headingOf(el) === s.heading;
     return el.localName === s.el.split('.')[0] && (s.text ? clip(textOf(el), 80) === s.text : describe(el).html === s.html);
   }
-  // find a suggestion's element in the deck as it is now: where it was, or else the one element that matches, anywhere when
-  // it comes from an earlier visit, and after that on its own slide only, as one that looks the same is not it. Two that match
-  // is no answer, and a slide deleted may come back
+  // Find a suggestion's element in the deck as it is now: at its stored path if that still matches, or else the single
+  // element that matches. One loaded from storage is looked for on every slide; once it has a home slide, only there.
+  // No match, several matches or a deleted home slide make it stale
   function locate(s) {
     const home = s[HOME];
     if (home && !slides.includes(home)) {
@@ -1071,12 +1065,12 @@
       s.slide = slides.indexOf(home);
       s.path = s.path.replace(/^#stage > \S+/, pathOf(home));
     }
-    let at = null;
-    try { at = document.querySelector(s.path); } catch {}
+    let hit = null;
+    try { hit = document.querySelector(s.path); } catch {}
     const within = home ? [home] : slides;
-    const inDeck = at && slideOf(at) && !at.closest('.counter, .s-notes') && same(at, s);
-    const found = inDeck ? [at] : (s.whole ? within : within.flatMap(x => [...x.querySelectorAll('*')]))
-      .filter(el => !el.closest('.counter, .s-notes') && same(el, s));
+    const inDeck = hit && slideOf(hit) && !hit.closest(OFF_SLIDE) && same(hit, s);
+    const found = inDeck ? [hit] : (s.whole ? within : within.flatMap(x => [...x.querySelectorAll('*')]))
+      .filter(el => !el.closest(OFF_SLIDE) && same(el, s));
     s.stale = found.length !== 1;
     if (s.stale) s.slide = Math.min(s.slide, slides.length - 1);
     else Object.assign(s, describe(found[0]), { slide: slides.indexOf(slideOf(found[0])) });
@@ -1094,7 +1088,7 @@
     const s = ed.open, el = ed.chain[n];
     ed.level = n;
     Object.assign(s, describe(el), measure(el), { kind: 'box', picked: true });
-    saveEdit();
+    saveSuggestions();
     ed.open = null;  // so that drawing does not drop it while it is still empty
     drawEdit();
     openAsk(s, true);
@@ -1103,7 +1097,7 @@
     const slide = slides[i], picked = !!el;
     // what it is about: the element picked, or the one under the point (of a box: its centre), widened until it covers
     // 85 % of the box, so a box drawn a little loose still lands on the element it was drawn around
-    const L = ed.layer.getBoundingClientRect(), k = L.width / 1920;
+    const { L, k } = layerBox();
     el ||= pick(L.left + (r.x + r.w / 2) * k, L.top + (r.y + r.h / 2) * k) || slide;
     const cover = q => Math.max(0, Math.min(r.x + r.w, q.x + q.w) - Math.max(r.x, q.x)) *
       Math.max(0, Math.min(r.y + r.h, q.y + q.h) - Math.max(r.y, q.y)) / (r.w * r.h);
@@ -1111,7 +1105,7 @@
     const s = { slide: i, [HOME]: slide, kind, ...r, ...describe(el), picked, note: '' };
     ed.items.push(s);
     ed.items.sort((x, y) => x.slide - y.slide);
-    saveEdit();
+    saveSuggestions();
     drawEdit();
     openAsk(s);
   }
@@ -1142,7 +1136,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'e-crumb' + (n === ed.level && s.kind !== 'pin' ? ' e-at' : '');
-      const el = ed.chain[n], cls = [...el.classList].find(c => c !== 'on' && c !== 'current');
+      const el = ed.chain[n], cls = ownClasses(el)[0];
       b.textContent = n === last ? `Slide ${s.slide + 1}` : el.localName + (cls ? '.' + cls : '');
       b.addEventListener('click', () => reselect(n));
       return b;
@@ -1156,14 +1150,14 @@
     if (after) ed.path.append((s.kind === 'pin' || !ed.chain.length ? ' › ' : ' ') + after);
   }
   function placeAsk() {
-    const s = ed.open, a = ed.ask, L = ed.layer.getBoundingClientRect(), k = L.width / 1920;
+    const s = ed.open, a = ed.ask, { L, k } = layerBox();
     ed.ta.style.height = 'auto';
     ed.ta.style.height = ed.ta.scrollHeight + 'px';
     let top = L.top + (s.y + s.h) * k + 12;
     // above leaves room for the mark's number, 30 px on screen
     if (top + a.offsetHeight > innerHeight - 8) top = Math.max(BAR_H + 8, L.top + s.y * k - 30 - 12 - a.offsetHeight);
     const rail = railOn ? RAIL_W : 0, pane = paneOn ? PANE_W : 0;
-    a.style.left = Math.max(rail + 8, Math.min(innerWidth - pane - a.offsetWidth - 8, L.left + s.x * k)) + 'px';
+    a.style.left = clamp(L.left + s.x * k, rail + 8, innerWidth - pane - a.offsetWidth - 8) + 'px';
     a.style.top = top + 'px';
   }
   // close the composer; a suggestion left empty goes with it, and then the list needs drawing again
@@ -1174,10 +1168,9 @@
     ed.ta.blur();  // at once: the next key steers the deck, it does not go to the box that was hidden
     if (!s || s.note.trim() || !ed.items.includes(s)) return false;
     ed.items.splice(ed.items.indexOf(s), 1);
-    saveEdit();
+    saveSuggestions();
     return true;
   }
-  // how many suggestions each thumbnail's slide has
   function drawCounts() {
     ed.thumbs.forEach((t, n) => {
       const c = t.querySelector('.e-thumb-count'), count = ed.items.filter(s => s.slide === n && s.note.trim()).length;
@@ -1217,8 +1210,8 @@
     label.addEventListener('click', () => { if (n >= 0) show(n, true); });
     return label;
   }
-  // the edits not saved yet, one label per slide, with those of slides no longer in the deck first. A press on a row or label may finish what is being typed, which draws the
-  // list again, and the click that follows must still find it there: what is in its place is left in the document
+  // The unsaved edits, grouped by slide, those of deleted slides first. Rows and labels are reused and moved into place,
+  // not rebuilt: a pointerdown on one can commit text and redraw this list, and the click that follows must still land on it
   function drawUnsaved() {
     ed.editEmpty.hidden = !!ed.unsaved.length;
     ed.editClear.disabled = !ed.unsaved.length;
@@ -1251,7 +1244,7 @@
       show(s.slide, true);
       openAsk(s);
     });
-    item.querySelector('.e-del').addEventListener('click', () => { offerUndo(); ed.items.splice(n, 1); saveEdit(); drawEdit(); });
+    item.querySelector('.e-del').addEventListener('click', () => { offerUndo(); ed.items.splice(n, 1); saveSuggestions(); drawEdit(); });
     return item;
   }
   function suggestionMark(s, n, item) {
@@ -1307,7 +1300,7 @@
       ed.list.append(item);
       if (s.slide === i) ed.marks.append(suggestionMark(s, n, item));
     });
-    if (moved) saveEdit();
+    if (moved) saveSuggestions();
     ed.copy.disabled = !ed.items.some(s => s.note.trim());
     ed.clear.disabled = !ed.items.length;
     ed.empty.hidden = !!ed.items.length;
@@ -1357,7 +1350,7 @@
   // the element next to this one, passing over the engine's counter and the notes
   function neighbour(el, step) {
     do el = step < 0 ? el.previousElementSibling : el.nextElementSibling;
-    while (el?.matches('.counter, .s-notes'));
+    while (el?.matches(OFF_SLIDE));
     return el;
   }
   function select(el) {
@@ -1371,8 +1364,8 @@
     ed.tools.querySelector('.e-do-later').disabled = !neighbour(el, 1);
   }
   const isSpace = n => n?.nodeType === Node.TEXT_NODE && !n.data.trim();
-  // an edit keeps the slide from before it as a twin: a copy whose elements are known as the same ones, by the number each got
-  // when first seen, so that an edit can be done again on its own element wherever that has gone
+  // A copy of an element in which every node has the id of its original, so that an edit recorded against the copy can be
+  // replayed on the same element later, wherever it has moved to
   function twin(el) {
     const copy = el.cloneNode(true), theirs = [copy, ...copy.querySelectorAll('*')];
     [el, ...el.querySelectorAll('*')].forEach((x, k) => {
@@ -1398,7 +1391,6 @@
     if (isSpace(el.previousSibling)) el.previousSibling.remove();
     el.remove();
   }
-  // how the list of edits names an element
   function nameOf(el) {
     const t = clip(textOf(el), 40);
     return t ? `"${t}"` : el.localName;
@@ -1413,7 +1405,7 @@
     }
     n.innerHTML = html;
   }
-  // do an edit on a slide, or on a copy of one; false if what it was done on is not there, and nothing has changed then
+  // apply an edit to a slide or to a copy of one; false, with nothing changed, if its element is gone
   function perform(root, op) {
     if (op.kind === 'notes') {
       setNotes(root, op.html);
@@ -1437,26 +1429,24 @@
     ed.sel = findById(slide, shows) || null;
     change(slide, before, { what, detail, shows, op });
   }
-  // an edit has been made: it can be undone, and is unsaved
   function remember(record) {
     record.seq = ++ed.seq;
     ed.done.push(record);
     ed.unsaved.push(record);
   }
-  // a slide has changed from what it was before
   function change(slide, before, edit) {
     remember({ slide, tree: before, ...edit });
     afterChange();
     sendThumb(slides.indexOf(slide));
   }
-  // a slide goes back to what it was, which says where it was then
+  // restore a slide's contents from a snapshot
   function putBack(slide, tree) {
     slide.replaceChildren(...tree.childNodes);
     renumber();
     sendThumb(slides.indexOf(slide));
   }
-  // the slides in this order. Each goes with the white space and comment before it, as a comment there names the slide; what
-  // follows the last slide stays at the end
+  // Put the slides in this order. Each takes along the whitespace and comment before it, as such a comment usually names
+  // the slide; whatever follows the last slide stays at the end
   function arrange(order) {
     const end = slides.at(-1).nextSibling, was = [...slides];
     for (const s of slides) {
@@ -1469,10 +1459,10 @@
     slides.splice(0, slides.length, ...order);
     renumber();
     matchThumbs();
-    // every counter says how many slides there are; with as many as before, only what is in another place looks different
+    // counters show the total, so a new slide count redraws every thumbnail; otherwise only the positions that changed
     slides.forEach((s, n) => { if (s !== was[n] || order.length !== was.length) sendThumb(n); });
   }
-  // the order after a slide edit, or nothing if that can't stand: its slide or the one it goes after is not there, or no slide would be left
+  // the order after a slide edit, or null if it can't apply: its slide or the one it goes after is gone, or no slide would be left
   function place(order, op) {
     if (!op.added && !order.includes(op.slide)) return null;
     const rest = order.filter(s => s !== op.slide);
@@ -1483,7 +1473,6 @@
   }
   // go to a slide after a change; one no longer in the deck leaves the view at the same place
   const showSlide = slide => show(slides.includes(slide) ? slides.indexOf(slide) : i, true);
-  // add, move or delete a slide, then show the given one
   function changeOrder(what, op, showing) {
     settle();
     const head = headingOf(op.slide);
@@ -1521,14 +1510,13 @@
   function deleteSlide(slide) {
     changeOrder('Deleted slide', { slide, gone: true }, slides[i]);
   }
-  // bring the view up to date with a change, showing this slide
   function afterChange(showing = slides[i]) {
     const sel = ed.sel;
     relocate();
-    saveEdit();
+    saveSuggestions();
     showSlide(showing);
     select(sel?.isConnected ? sel : null);
-    ed.undoButton.disabled = !ed.done.length;
+    ed.undo.disabled = !ed.done.length;
   }
   function undoChange() {
     settle();
@@ -1544,12 +1532,12 @@
     else putBack(last.slide, twin(last.tree));
     afterChange(last.slide);
   }
-  // typed text and notes hold all that was there, so they are made on top of earlier ones on the same text or notes
+  // a text or notes edit stores the whole new content, so it depends on an earlier edit of the same text or notes
   const holds = (later, earlier) => (later.op.kind === 'text' || later.op.kind === 'notes') &&
     later.op.kind === earlier.op?.kind && later.op.id === earlier.op.id;
-  // the slide without this edit: from before it, with each later one done again. What goes with it: undos of saved edits, which
-  // happen in order, and edits on what is no longer there. An edit of the order of the slides works the same on that order, and
-  // the edits on a slide go with its adding, be that this edit or one that goes with it
+  // What removing edit c leaves: the slide, or the slide order, as it was before c, with the later edits replayed on it.
+  // gone has c and the later edits that can't be replayed without it, kept the others with their new snapshots. Undos of
+  // saved edits always go, as they only work in order, and so do the edits on a slide whose adding goes
   function without(c) {
     const later = ed.unsaved.slice(ed.unsaved.indexOf(c) + 1), gone = [c], kept = [];
     if (c.order) {
@@ -1588,11 +1576,11 @@
     else putBack(c.slide, root);
     afterChange(c.slide);
   }
-  // a thumbnail is the file as it was opened, so it is sent its slide as it is now
+  // a thumbnail loaded the file as it was saved, so it is sent its slide's current HTML
   function sendThumb(n) {
     if (ed.thumbs[n]) sendView(ed.thumbs[n].querySelector('iframe'), slides[n].outerHTML);
   }
-  const sendView = (frame, html) => frame.contentWindow.postMessage({ deck: 'view', i: 0, k: -1, html }, '*');
+  const sendView = (f, html) => f.contentWindow.postMessage({ deck: 'view', i: 0, k: -1, html }, '*');
   function textNodes(el) {
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), t = [];
     while (w.nextNode()) t.push(w.currentNode);
@@ -1644,7 +1632,6 @@
       change(slide, before, { what: 'Deleted', detail: t.was, op: { kind: 'delete', id } });
     } else change(slide, before, { what: 'Changed text', detail: `${t.was} → ${nameOf(el)}`, shows: id, op: { kind: 'text', id, tree: twin(el) } });
   }
-  // finish what is being typed in the slide and the notes
   function settle() {
     commitText();
     notes.blur();

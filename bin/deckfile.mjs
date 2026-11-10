@@ -2,16 +2,18 @@
 // deckfile update [--check] <deck.html>...
 // Replaces the engine blocks of each deck, <style data-deck="engine"> and <script data-deck="engine">, with this
 // version's src/deck.css and src/deck.js. Nothing else in the deck changes: the theme and the slides are yours.
-// Exit status: 0 when every deck is (now) up to date, 1 when --check found one out of date, 2 on an error.
+// Exit status: 0 when every deck is up to date, 1 when --check found one out of date, 2 on an error.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const src = name => readFileSync(fileURLToPath(new URL('../src/' + name, import.meta.url)), 'utf8');
 // each pattern also matches HTML comments, which are kept as they are: a comment may well mention the tags
-const BLOCKS = [
-  { tag: '<style data-deck="engine">', re: /<!--[\s\S]*?-->|(<style\b[^>]*\bdata-deck="engine"[^>]*>)[\s\S]*?(<\/style>)/g, body: src('deck.css') },
-  { tag: '<script data-deck="engine">', re: /<!--[\s\S]*?-->|(<script\b[^>]*\bdata-deck="engine"[^>]*>)[\s\S]*?(<\/script>)/g, body: src('deck.js') },
-];
+const block = (tag, file) => ({
+  tag: `<${tag} data-deck="engine">`,
+  re: new RegExp(String.raw`<!--[\s\S]*?-->|(<${tag}\b[^>]*\bdata-deck="engine"[^>]*>)[\s\S]*?(</${tag}>)`, 'g'),
+  body: src(file),
+});
+const BLOCKS = [block('style', 'deck.css'), block('script', 'deck.js')];
 
 const [cmd, ...rest] = process.argv.slice(2);
 const check = rest.includes('--check');

@@ -22,7 +22,7 @@ logo sits in the bottom-left corner.
 | `slide closing` | Final card | Large heading, icon instead of logo |
 
 Attributes:
-- `data-auto="600"` on a section reveals its `.build` elements by themselves, one every N ms, as soon as the slide is shown. `→` and `←` take over.
+- `data-auto="600"` on a section reveals its `.build` elements by themselves, one every N ms, as soon as the slide is shown. Without a number it is 500. `→` and `←` take over.
 
 ## Text
 
@@ -97,7 +97,7 @@ A screenshot or drawing in a thin frame. Its width comes from the column it sits
 <table class="keys"><tr><td>Label</td><td>Value</td></tr></table>
 ```
 
-Rows between rules. `kbd` renders keyboard keys as outlined caps.
+Rows between rules. `kbd` renders keyboard keys as outlined caps. Put `class="build"` on the `<tr>` to reveal the table row by row.
 
 ## Buttons
 

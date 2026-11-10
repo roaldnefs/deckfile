@@ -6,6 +6,7 @@
          Home / End  first / last slide
          F fullscreen   P print to PDF
          S presenter view, in a second window     E edit view     Esc leave the edit view
+         in the edit view: N notes pane   Cmd/Ctrl+S save   Cmd/Ctrl+Z undo   Cmd/Ctrl+↑ / ↓ move the slide
          click / tap: left 30 % of the screen back, the rest forward · swipe left / right on touch
          pointer near the bottom-left corner: buttons for back, the presenter view, the edit view, the shortcuts and forward
 
@@ -219,7 +220,7 @@
     return true;
   }
   addEventListener('keydown', e => {
-    const typing = e.target.closest('textarea') || e.target.isContentEditable;
+    const typing = e.target.closest('textarea, input, select') || e.target.isContentEditable;
     // edit view shortcuts; while text is being typed, Cmd/Ctrl+Z and the arrows are left to the browser
     if (editing && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
       const key = e.key.toLowerCase();
@@ -257,12 +258,12 @@
     }
   });
 
-  // click or tap: the left 30 % of the viewport goes back, the rest forward; links and buttons keep working;
+  // click or tap: the left 30 % of the viewport goes back, the rest forward; links, buttons and other controls keep working;
   // in edit mode a click selects or marks instead
   const stage = document.getElementById('stage');
   let swiped = false, tx = 0, ty = 0;
   stage.addEventListener('click', e => {
-    if (swiped || editing || e.target.closest('a, button')) return;
+    if (swiped || editing || e.target.closest('a, button, input, select, textarea, label, summary, video, audio')) return;
     (e.clientX < innerWidth * 0.3 ? prev : next)();
   });
   // swipe on touch: left is forward, right is back; a swipe suppresses the click that follows it
@@ -281,7 +282,7 @@
     box.id = 'deck-controls';
     const button = (cls, label, title, name) =>
       `<button type="button" class="${cls}" tabindex="-1" aria-label="${label}" title="${title}">${icon(name)}</button>`;
-    const KEYS = [['→ Space', 'Next'], ['←', 'Previous'], ['↓ ↑', 'Whole slide forward / back'], ['Home End', 'First / last slide'],
+    const KEYS = [['→ Space PgDn', 'Next'], ['← PgUp', 'Previous'], ['↓ ↑', 'Whole slide forward / back'], ['Home End', 'First / last slide'],
       ['F', 'Fullscreen'], ['P', 'Print to PDF'],
       ['S', 'Presenter view'], ['E', 'Edit view'], ['Esc', 'Close']];
     box.innerHTML = '<div id="deck-help" hidden>' + KEYS.map(([keys, what]) =>
@@ -331,6 +332,9 @@
   addEventListener('resize', fit);
   fit();
   show(i);
+  // keep the screen awake while the deck shows; the browser drops the lock when the tab is hidden, and may refuse it
+  const awake = () => { if (document.visibilityState === 'visible') navigator.wakeLock?.request('screen').catch(() => {}); };
+  if (mode !== 'view') { awake(); document.addEventListener('visibilitychange', awake); }
   // ?print: print once images and fonts are in
   if (params.has('print')) addEventListener('load', () => document.fonts.ready.then(() => print()));
 

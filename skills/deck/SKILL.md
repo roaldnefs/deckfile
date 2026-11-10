@@ -65,7 +65,7 @@ Before you report the deck as done, check it and fix what fails:
 - [ ] Images are relative files that exist. Nothing is base64-encoded except small SVG logos.
 - [ ] Every font is openly licensed (for example SIL OFL), and no commercial face is named, even as a fallback.
 - [ ] The `data-deck="engine"` blocks are unchanged from the template (`npx github:roaldnefs/deckfile update --check <slug>/index.html` exits 0).
-- [ ] Nothing overflows the 1920×1080 canvas. As a rule of thumb, at most 6 bullets per slide, terminal panels of 12 lines or fewer, and headings that fit on two lines.
+- [ ] Nothing overflows the 1920×1080 canvas. As a rule of thumb, at most 5 bullets per slide, terminal panels of 12 lines or fewer, and headings that fit on two lines.
 - [ ] The slide count fits the time slot.
 
 If you can run a headless browser, render the deck and look at it: print it to PDF (one page per slide) or take 1920×1080 screenshots, then check for overflow, clipped text and contrast.

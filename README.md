@@ -91,6 +91,9 @@ The template's header comment is a short reference to the markup.
 4. Steer from either window with the arrow keys, Space or a clicker. Both
    windows stay in step.
 
+While the deck or the presenter view is showing, it asks the browser to keep
+the screen awake, so the laptop does not dim or lock halfway through a talk.
+
 <p align="center">
   <img src="docs/presenter-view.png" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right" width="100%">
   <br>
@@ -121,6 +124,7 @@ between pages opened from `file://`.
 | `E` | edit view, see [Editing and suggesting](#editing-and-suggesting) |
 | `N` / `Esc` | in the edit view: fold the notes pane / drop the selection, or else leave the view |
 | `Cmd/Ctrl+↑` / `↓` | in the edit view: move the current slide earlier / later |
+| `Cmd/Ctrl+S` / `Cmd/Ctrl+Z` | in the edit view: save the file / undo the last edit |
 | click / tap / swipe | left 30 % of the screen back, the rest forward; swipe left / right on touch |
 | pointer near the bottom-left corner | buttons for back, the presenter view, the edit view, the shortcuts and forward |
 
@@ -150,7 +154,7 @@ The engine needs very little markup:
 | `<div id="stage">` | holds the slides, a fixed 1920×1080 canvas |
 | `<section class="slide">` | one slide, in document order |
 | `class="build"` on any element | revealed one at a time with `→` |
-| `data-auto="600"` on a section | its builds reveal by themselves, one every 600 ms, as soon as the slide shows; `→` and `←` take over |
+| `data-auto="600"` on a section | its builds reveal by themselves, one every 600 ms (500 without a number), as soon as the slide shows; `→` and `←` take over |
 | `<div class="s-notes">` inside a slide | speaker notes, for the presenter and edit views |
 
 The engine sets `.current` on the slide shown and `.on` on each build it
@@ -286,6 +290,9 @@ Or copy or symlink [`skills/deck`](skills/deck) into `~/.claude/skills/`.
 ## Limits
 
 - The tests run in Chromium. Firefox and Safari are not tested yet.
+- Keeping the screen awake uses the Screen Wake Lock API. A browser without
+  it, or one that refuses (battery saver), lets the screen sleep as before. It
+  does not stop a lock you start yourself or one your organisation enforces.
 - Speaker notes and the timer are in the presenter view, which needs a second
   window: allow pop-ups for the page.
 - The first save from the edit view rewrites some markup the way the browser

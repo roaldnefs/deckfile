@@ -13,6 +13,7 @@ html,body{margin:0;height:100%;overflow:hidden}
 /* builds: hidden until the engine adds .on */
 .build{opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease}
 .build.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.build{transition:none}}
 
 /* speaker notes: placed by the presenter and edit views */
 #notes{overflow:auto}

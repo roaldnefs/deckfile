@@ -66,6 +66,14 @@ const LABELLED = `<!-- first -->
 <section class="slide">
   <h2>C</h2>
 </section>`;
+// a slide with controls of its own, put in front of the deck under test
+const CONTROLS = `<section class="slide">
+  <h2>Controls</h2>
+  <input type="text">
+  <select><option>One</option><option>Two</option></select>
+  <details><summary>More</summary><p>Hidden</p></details>
+</section>
+`;
 const FOUR = ['A', 'B', 'C', 'D'].map(h => `<section class="slide">\n  <h2>${h}</h2>\n  <p>Text ${h}</p>\n</section>`).join('\n\n');
 const firstSlide = (html, section) => html.replace(/<div id="stage">\s*\n/, m => m + section);
 const tempFile = html => {
@@ -134,6 +142,16 @@ async function goTo(page, n) {
   await page.evaluate(n => sessionStorage.setItem('deck:' + location.pathname, n), n);
   await page.reload();
   expect(await current(page)).toBe(n);
+}
+// a stand-in for the Screen Wake Lock API in every window: what is asked for ends up in window.woke
+async function fakeWakeLock(page, refuse = false) {
+  await page.context().addInitScript(refuse => {
+    Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: type => {
+      window.woke = [...window.woke || [], type];
+      return refuse ? Promise.reject(new DOMException('refused', 'NotAllowedError')) : Promise.resolve({});
+    } } });
+  }, refuse);
+  await page.reload();
 }
 // the presenter view, offline like the deck; `open` is what opens it, S unless given
 async function openPresenter(page, open = () => page.keyboard.press('s')) {
@@ -493,6 +511,62 @@ test.describe('slide view', () => {
     await expect.poll(name).toBe('none');
     await page.emulateMedia({ reducedMotion: 'no-preference', media: 'print' });
     await expect.poll(name).toBe('none');
+  });
+
+  test('builds appear at once for reduced motion', async ({ page }) => {
+    const { manual } = await info(page);
+    await goTo(page, manual);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await page.locator(`${CUR} .build`).first().evaluate(b => getComputedStyle(b).transitionDuration)).toBe('0s');
+  });
+
+  test('keys typed in a field or a list on a slide are not the deck\'s', async ({ page }) => {
+    await page.goto(pathToFileURL(tempFile(firstSlide(readFileSync(deck, 'utf8'), CONTROLS))).href);
+    await page.locator(`${CUR} input`).focus();
+    await page.keyboard.type('a f b');
+    await expect(page.locator(`${CUR} input`)).toHaveValue('a f b');
+    await page.locator(`${CUR} select`).evaluate(s => s.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+    expect(await current(page)).toBe(0);
+    expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
+  });
+
+  test('a click on a control of a slide does not move the deck', async ({ page }) => {
+    await page.goto(pathToFileURL(tempFile(firstSlide(readFileSync(deck, 'utf8'), CONTROLS))).href);
+    await page.locator(`${CUR} input`).click();
+    await page.locator(`${CUR} summary`).click();
+    expect(await current(page)).toBe(0);
+    await expect(page.locator(`${CUR} details p`)).toBeVisible();
+  });
+
+  test('the deck and the presenter view keep the screen awake, again after the tab was hidden', async ({ page }) => {
+    await fakeWakeLock(page);
+    const woke = w => w.evaluate(() => window.woke);
+    expect(await woke(page)).toEqual(['screen']);
+    // the browser drops the lock with the tab hidden: asked for again once it shows
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(await woke(page)).toEqual(['screen']);
+    await page.evaluate(() => {
+      delete document.visibilityState;
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(await woke(page)).toEqual(['screen', 'screen']);
+
+    const pv = await openPresenter(page);
+    await expect(pv.locator('.p-count')).toBeVisible();
+    expect(await woke(pv)).toEqual(['screen']);
+    const pane = pv.frames().find(f => f.url().includes('?view'));
+    await pane.waitForSelector('.slide.current');
+    expect(await woke(pane)).toBeUndefined();
+  });
+
+  test('a browser that refuses to keep the screen awake is no error', async ({ page }) => {
+    await fakeWakeLock(page, true);
+    expect(await page.evaluate(() => window.woke)).toEqual(['screen']);
+    await page.keyboard.press('ArrowDown');
+    expect(await current(page)).toBe(1);
   });
 });
 

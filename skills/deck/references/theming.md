@@ -68,7 +68,7 @@ Larger logos (above 10 KB) can stay as files next to the deck:
 
 The `<link rel="icon">` is a tiny inline SVG: two stacked white slides on a blue tile. To match your accent, change the two `stop-color` values (`%23` = `#`), or point it at a file next to the deck.
 
-## Going further: a skin
+## Skins
 
 For a brand that needs more than colours (square panels, uppercase
 headings, no title animation, a different logo position), append overrides under

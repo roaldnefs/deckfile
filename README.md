@@ -1,23 +1,73 @@
-# ![deckfile: presentations as one self-contained HTML file](docs/header.svg)
-
-Presentations as one self-contained HTML file. No build step, no bundler, no
-dependencies: the slides, the engine and the theme live in a single
-`index.html` that opens straight from disk, without a network, and works the
-same from any static host. [See the live demo](https://roaldnefs.github.io/deckfile/).
-
-- 1920×1080 slides, scaled to any screen
-- builds, one step at a time or timed
-- a presenter view in a second window, with speaker notes and a timer
-- print to PDF with one page per slide
-- an edit view like PowerPoint's: change text and elements, add, duplicate, reorder and delete
-  slides, and save the file, or suggest changes and copy them as one prompt for a
-  coding agent
-- about 1,700 lines of plain JavaScript and 50 of CSS, readable in the file itself
-
-<p>
-  <img src="docs/presenter-view.png" width="49%" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right">
-  <img src="docs/edit-view.png" width="49%" alt="The edit view: thumbnails on the left, a slide with one element outlined in orange and a suggestion box beside it, speaker notes below, suggestions on the right">
+<p align="center">
+  <img src="docs/icon.svg" width="128" height="128" alt="deckfile icon: two stacked white slides on a blue tile">
 </p>
+
+<h1 align="center">deckfile</h1>
+
+<p align="center">
+  <b>Presentations as one self-contained HTML file; no build step, no bundler, no dependencies.</b><br>
+  The slides, the engine and the theme live in a single <code>index.html</code> that opens straight from disk,<br>
+  without a network, and works the same from any static host.
+</p>
+
+<p align="center">
+  <img alt="One HTML file" src="https://img.shields.io/badge/one-HTML%20file-0071e3?style=flat-square&logo=html5&logoColor=white">
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-2d81ff?style=flat-square">
+  <img alt="Works offline from file://" src="https://img.shields.io/badge/offline-file%3A%2F%2F-2d81ff?style=flat-square">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-3a3a3a?style=flat-square"></a>
+  <a href="https://github.com/roaldnefs/deckfile/actions/workflows/test.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/roaldnefs/deckfile/test.yml?style=flat-square&label=tests"></a>
+</p>
+
+<p align="center">
+  <a href="https://roaldnefs.github.io/deckfile/"><b>See the live demo</b></a> ·
+  <a href="template.html">Template</a> ·
+  <a href="skills/deck">Claude Code skill</a>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="docs/edit-view.png" alt="The edit view: thumbnails on the left, a slide with one element outlined in orange and a suggestion box beside it, speaker notes below, suggestions on the right" width="100%">
+  <br>
+  <sub>The edit view: change the deck in place, or collect suggestions and copy them as one prompt.</sub>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#presenting">Presenting</a> ·
+  <a href="#keys">Keys</a> ·
+  <a href="#writing-slides">Writing slides</a> ·
+  <a href="#editing-and-suggesting">Editing</a> ·
+  <a href="#theming">Theming</a> ·
+  <a href="#updating-the-engine">Updating</a> ·
+  <a href="#with-claude-code">Claude Code</a> ·
+  <a href="#limits">Limits</a>
+</p>
+
+<br>
+
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <h3>One file</h3>
+      1920×1080 slides, scaled to any screen, with builds one step at a time or timed. About 1,700 lines of plain JavaScript and 50 of CSS, readable in the file itself.
+    </td>
+    <td width="25%" valign="top">
+      <h3>Present</h3>
+      A presenter view in a second window, with speaker notes, the next slide and a timer. Print to PDF with one page per slide.
+    </td>
+    <td width="25%" valign="top">
+      <h3>Edit in place</h3>
+      Change text, move elements, add and reorder slides in the browser, then save the file. No editor, no build.
+    </td>
+    <td width="25%" valign="top">
+      <h3>Agent-ready</h3>
+      Collect suggestions on the slides and copy them as one prompt for a coding agent, or have the Claude Code skill write the deck from a brief.
+    </td>
+  </tr>
+</table>
+
+<br>
 
 ## Quick start
 
@@ -41,20 +91,21 @@ The template's header comment is a short reference to the markup.
 4. Steer from either window with the arrow keys, Space or a clicker. Both
    windows stay in step.
 
-The presenter view is laid out like PowerPoint's. The current slide is on the
-left, with previous and next buttons, the slide count and the builds left on
-the slide below it. On the right is what the next press shows (the next build,
-or the next slide as it first appears), above the speaker notes, with A− / A+
-to resize them. Along the top are the clock and the elapsed timer, which starts
-when the deck first moves and has pause and reset buttons. A red "Not
-linked" badge shows when the deck window is closed or stops answering; if the
-deck window reloads, the two link up again by themselves within a few seconds.
-Drag the bars between the panes to resize them, and double-click a bar to reset
-it. The layout and the notes size are remembered in that browser.
+<p align="center">
+  <img src="docs/presenter-view.png" alt="The presenter view: timer on top, the current slide on the left, the next slide above the speaker notes on the right" width="100%">
+  <br>
+  <sub>The presenter view: the current slide, what comes next, the notes and the timer.</sub>
+</p>
 
-The deck window, the presenter view and its two slide previews are all the same
-file: `?presenter` is the presenter view and `?view` a read-only slide. They
-talk with `postMessage`, which also works between pages opened from `file://`.
+The presenter view shows the current slide, what the next press brings, the
+speaker notes, a clock and a timer that starts when the deck first moves. Drag
+the bars between the panes to resize them. A red "Not linked" badge means the
+deck window was closed or stopped answering; after a reload of the deck the two
+link up again by themselves.
+
+The deck, the presenter view and its slide previews are all the same file
+(`?presenter` and `?view`). They talk with `postMessage`, which also works
+between pages opened from `file://`.
 
 ## Keys
 
@@ -119,88 +170,34 @@ base64 large images into the HTML.
 
 ## Editing and suggesting
 
-Press `E` for the edit view, laid out like PowerPoint's: slide thumbnails on the
-left, the slide with its speaker notes below it, and on the right the unsaved
-edits in Edit or the suggestions in Suggest. Every slide shows with all its
-builds. The play button in the toolbar or `E` goes back to the slides. The
-**Edit** and **Suggest** switch in the toolbar says what a click on the slide
-does: Edit changes the deck, Suggest collects suggestions for whoever edits the
-file. The view opens in Edit the first time, then in the mode you last used in
-this tab. Pressing a suggestion's mark in Edit goes to Suggest.
+Press `E` for the edit view: thumbnails on the left, the slide with its speaker
+notes in the middle, and the unsaved edits or the suggestions on the right. The
+**Edit** / **Suggest** switch in the toolbar sets what a click on the slide does.
 
-### Edit
+**Edit** changes the deck:
 
-- Double-click text to type in it. `Enter` or `Tab` keeps it, `Esc` takes it back,
-  `Shift+Enter` is a new line, and a press elsewhere keeps it. Inline elements such
-  as `<code>` stay. Text you empty deletes its element. Pasted text is plain.
-- Click an element to select it, then **Select parent**, **Move earlier**, **Move
-  later**, **Duplicate** or **Delete** in the toolbar (or the `Delete` key). Moving
-  swaps it with its neighbour, as slides lay out by flow, not by position.
-- Code panels and drawings are selected and moved whole, and not typed in. Neither
-  is a block whose children are not all inline, such as a panel of labels: select
-  its text instead.
-- Type in the notes pane to change the notes of the slide. Notes you empty are
-  removed.
-- **New slide** in the toolbar opens a menu with a preview of each layout: Title,
-  Content, Two columns and Section. The one you click is added after the current slide, with text to
-  type over. The layouts are `<section>`s in the deck's
-  `<template data-deck="layouts">`, each named by `data-layout`, so you can change
-  them or add your own. Keep them to text: a terminal panel or an image can't be
-  filled in from the edit view. With one layout the button adds it at once, and a
-  deck without the block gets a plain slide.
-- **Duplicate slide** in the toolbar adds a copy after the current slide, with its
-  notes and builds. **Delete slide** deletes the current slide, and hovering a
-  thumbnail gives × to delete that one; the last slide left can't be deleted.
-- Drag a thumbnail to move its slide, or press `Cmd/Ctrl+↑` or `↓` to move the
-  current one. A slide's comment in the source moves and goes with it; a copy has
-  no comment.
-- The side pane lists every edit not saved yet, by slide, with those of deleted
-  slides first. Click one to go there and select its element.
-  Hover one for × to remove just that edit: later edits stay, on the same elements.
-  A later one goes with it only if it can't stand without it, such as text typed in
-  a copy whose duplication is removed, text retyped over the text being removed, or
-  edits on a slide whose adding or duplication is removed.
-  × asks for a second click then.
-  **Clear**, clicked twice, removes them all. Removing can't itself be undone.
-- **Undo** or `Cmd/Ctrl+Z` takes back one change at a time, on any slide. An edit
-  not saved yet leaves the list. Taking back a saved one joins it, as the file then
-  differs from the slide.
-- **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose once per visit in
-  Chromium, and as a download elsewhere. Choose the deck's own file to replace it.
-  It overwrites what is there, so if an agent or editor changed the file since you
-  opened it, reload first. The browser asks before you leave with unsaved changes.
+- Double-click text to type in it. `Enter` keeps it, `Esc` takes it back.
+- Click an element to select it, then move, duplicate or delete it from the
+  toolbar.
+- Type in the notes pane to change the speaker notes.
+- Add, duplicate and delete slides from the toolbar, and drag a thumbnail to
+  reorder. New slides come from the layouts in the deck's
+  `<template data-deck="layouts">`, which you can change or add to.
+- **Undo** or `Cmd/Ctrl+Z` takes back one change. × on a row in the list of
+  unsaved edits removes just that edit.
+- **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose in Chromium,
+  as a download elsewhere. It overwrites what is there, so reload first if an
+  agent or editor changed the file since you opened it.
 
-### Suggest
+**Suggest** leaves the deck alone and collects notes for whoever edits the file:
 
-- Move the cursor over the slide and the element under it is outlined in orange.
-  Click to select it, click the background to pin a spot, or drag to draw a box
-  around an area. Type the suggestion in the box that opens and press `Enter`
-  (`Shift+Enter` for a new line). A suggestion left empty is dropped.
-- To select what surrounds an element, such as the card around a line of text,
-  click a level in the top line of that box, or press `↑` and `↓` while the box
-  is empty.
-- While the box is open, the top bar has **Select parent**, **Select child**,
-  **Delete suggestion** and **Save suggestion**.
-- Each suggestion records its slide and heading, its place in the 1920×1080
-  frame, and the element it is on, with a selector and its text.
-- When the deck has changed, a suggestion follows its element to where it is now.
-  If that element has changed or no single match exists, the suggestion is
-  labelled **Changed**, and the prompt says so. While the deck is open it stays
-  with its slide, also when another slide looks the same, and is labelled
-  **Changed** while its slide is deleted.
-- **Copy prompt**, at the bottom of the suggestions, puts every suggestion on the
-  clipboard as one Markdown prompt that names the deck file, ready to paste into
-  Claude Code or another coding agent working on the deck.
-- Click a suggestion, or its mark, to change it. Hover one for × to delete it,
-  or click **Clear** twice to delete them all; **Undo** brings them back for a
-  few seconds.
-- Each thumbnail shows how many suggestions its slide has. The buttons in the
-  status bar fold the thumbnails, notes and side pane away to give the slide
-  more room.
-
-A refresh stays in the edit view, in the same mode, but loses unsaved changes.
-Suggestions are kept per deck in that browser (`localStorage`). They are not
-shared; send the copied prompt instead.
+- Click an element, click the background to pin a spot, or drag a box around an
+  area, then type the suggestion.
+- **Copy prompt** puts every suggestion on the clipboard as one Markdown prompt,
+  each with its slide, its position and a selector for its element, ready to
+  paste into Claude Code or another coding agent.
+- Suggestions are kept per deck in the browser's `localStorage`. One whose
+  element has changed since is labelled **Changed**.
 
 ## Theming
 
@@ -286,31 +283,14 @@ and a self-check.
 
 Or copy or symlink [`skills/deck`](skills/deck) into `~/.claude/skills/`.
 
-## Browsers and limits
+## Limits
 
-The automated tests run in Chromium. Firefox and Safari are not tested yet.
-
+- The tests run in Chromium. Firefox and Safari are not tested yet.
 - Speaker notes and the timer are in the presenter view, which needs a second
-  window. Allow pop-ups for the page. A phone or tablet that can't open one gets
-  no notes.
-- Suggestions stay in the browser that made them. To share them, send the copied
-  prompt.
-- The browser is the only source a saved file can come from, so the first save
-  rewrites some markup the same way the browser reads it: self-closed SVG tags,
-  `<tbody>` in tables, entities, `&` in links, empty attributes. Comments and
-  indentation stay, and later saves change only what you changed. A number in a
-  comment, such as `<!-- 2 · … -->`, is not updated when slides move.
-- Saving keeps whatever else is in the page: changes made by a deck's own script,
-  or by a browser extension, end up in the file. Undo replaces a slide's elements,
-  so such a script loses hold of what it found before.
-- A deck saved to another folder loses the photos beside it, as their paths are
-  relative. An open presenter window shows the file as it was: reopen it after
-  saving. Until then it follows the deck by position, so after adding, moving or
-  deleting slides it can show a different slide from the deck window.
-- The edit view's side panes have a fixed width. In a small window, fold them away
-  with the buttons in its status bar.
-- Dragging thumbnails needs a mouse or trackpad: touch screens can't drag them, and
-  the keyboard shortcut is the other way to reorder.
+  window: allow pop-ups for the page.
+- The first save from the edit view rewrites some markup the way the browser
+  read it: self-closed SVG tags, `<tbody>` in tables, entities. Comments and
+  indentation stay, and later saves change only what you changed.
 - Photos sit beside the file, so a deck with photos travels as a folder.
 
 ## Development

@@ -155,6 +155,7 @@ The engine needs very little markup:
 | `<section class="slide">` | one slide, in document order |
 | `class="build"` on any element | revealed one at a time with `→` |
 | `data-auto="600"` on a section | its builds reveal by themselves, one every 600 ms (500 without a number), as soon as the slide shows; `→` and `←` take over |
+| `data-skip` on a section | the slide is skipped: left out of the show, the slide numbers and the print, and still there in the edit view |
 | `<div class="s-notes">` inside a slide | speaker notes, for the presenter and edit views |
 
 The engine sets `.current` on the slide shown and `.on` on each build it
@@ -187,6 +188,9 @@ notes in the middle, and the unsaved edits or the suggestions on the right. The
 - Add, duplicate and delete slides from the toolbar, and drag a thumbnail to
   reorder. New slides come from the layouts in the deck's
   `<template data-deck="layouts">`, which you can change or add to.
+- **Skip slide** keeps the current slide in the file and out of the show: a
+  backup slide, or one that is not ready. Its thumbnail is dimmed, and the
+  button brings it back.
 - **Undo** or `Cmd/Ctrl+Z` takes back one change. × on a row in the list of
   unsaved edits removes just that edit.
 - **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose in Chromium,

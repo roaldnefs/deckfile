@@ -15,6 +15,7 @@
     <div class="s-notes"> inside a slide   speaker notes, shown in the presenter and edit views
     class="build" on any element        revealed one at a time with →
     data-auto="500" on a section       its builds reveal by themselves, one every 500 ms
+    data-skip on a section             left out of the show, its numbers and the print; the edit view still shows it
   The engine sets .current on the slide shown, .on on each build revealed, and adds a <span class="counter"> to every slide.
   URL: ?print opens the print dialog once loaded; ?presenter is the presenter window; ?view is one read-only slide, used
   for the presenter's panes and the edit view's thumbnails and layout previews.
@@ -42,6 +43,8 @@
   };
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const builds = s => [...s.querySelectorAll('.build')];
+  const skips = s => s?.dataset.skip !== undefined;
+  const shown = () => slides.filter(s => !skips(s));
   let i = Math.min(+store.get() || 0, slides.length - 1);
   let autoTimer = null;
   let presenterWin = null;  // deck: the presenter window, once it has said hello
@@ -58,11 +61,12 @@
   let railOn = true, paneOn = true;  // the side panes of the edit view are showing
   const OFF_SLIDE = '.counter, .s-notes';  // inside a slide, but not part of what it shows
 
-  // the slide number, in a <span class="counter"> the engine appends to every slide
+  // the slide number, in a <span class="counter"> the engine appends to every slide; skipped slides have none and are not counted
   function renumber() {
-    slides.forEach((s, k) => {
+    const all = shown();
+    slides.forEach(s => {
       const c = s.querySelector(':scope > .counter:last-child') || s.appendChild(Object.assign(document.createElement('span'), { className: 'counter' }));
-      c.textContent = `${k + 1} / ${slides.length}`;
+      c.textContent = skips(s) ? '' : `${all.indexOf(s) + 1} / ${all.length}`;
     });
   }
   renumber();
@@ -96,16 +100,24 @@
     };
     autoTimer = setTimeout(step, delay);
   }
+  // slide n, or the first one from there on, going d, that is not skipped; the edit view passes over none.
+  // Where the deck ends first, it stays on the current slide
+  function seek(n, d) {
+    while (!editing && skips(slides[n])) n += d;
+    return slides[n] ? n : i;
+  }
+  // where the show is when the current slide is skipped: on the next one shown, or else the one before
+  const land = () => seek(seek(i, 1), -1);
   function next() {
     clearTimeout(autoTimer);
     const b = builds(slides[i]).find(x => !x.classList.contains('on'));
-    b ? b.classList.add('on') : show(i + 1);
+    b ? b.classList.add('on') : show(seek(i + 1, 1));
     sync();
   }
   function prev() {
     clearTimeout(autoTimer);
     const on = builds(slides[i]).filter(x => x.classList.contains('on'));
-    on.length ? on.pop().classList.remove('on') : show(i - 1, true);
+    on.length ? on.pop().classList.remove('on') : show(seek(i - 1, -1), true);
     sync();
   }
   // show slide n with its first k builds on, or all of them when k < 0 (presenter and view windows)
@@ -128,13 +140,13 @@
     // the next press shows another build of this slide, unless it builds by itself;
     // otherwise the next slide as it first appears (data-auto slides fully built, since that is where they end up)
     const nextBuild = left > 0 && slides[i].dataset.auto === undefined;
-    const after = slides[i + 1];
+    const after = seek(i + 1, 1), all = shown();
     pv.cur.contentWindow.postMessage({ deck: 'view', i, k }, '*');
     pv.next.contentWindow.postMessage(nextBuild ? { deck: 'view', i, k: k + 1 }
-      : { deck: 'view', i: i + 1, k: after?.dataset.auto !== undefined ? -1 : 0 }, '*');
+      : { deck: 'view', i: after, k: slides[after].dataset.auto !== undefined ? -1 : 0 }, '*');
     pv.label.textContent = nextBuild ? 'Next build' : 'Next slide';
-    pv.end.hidden = nextBuild || i < slides.length - 1;
-    pv.count.textContent = `Slide ${i + 1} of ${slides.length}`;
+    pv.end.hidden = nextBuild || after !== i;
+    pv.count.textContent = `Slide ${all.indexOf(slides[i]) + 1} of ${all.length}`;
     pv.left.textContent = left > 0 ? `${left} build${left > 1 ? 's' : ''} left on this slide` : '';
   }
 
@@ -154,7 +166,7 @@
     help: 'M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM6.2 6.2a1.9 1.9 0 1 1 2.8 1.7c-.6.3-1 .8-1 1.4M8 11.6v.1',
     bubble: 'M3 2.5h10A1.5 1.5 0 0 1 14.5 4v6a1.5 1.5 0 0 1-1.5 1.5H8L4.5 14v-2.5H3A1.5 1.5 0 0 1 1.5 10V4A1.5 1.5 0 0 1 3 2.5z',
     save: 'M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11', down: 'M8 3v10M3.5 8.5 8 13l4.5-4.5', check: 'M3 8.5 6.5 12 13 4.5',
-    plus: 'M8 3v10M3 8h10'
+    plus: 'M8 3v10M3 8h10', skip: 'M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM3.4 3.4l9.2 9.2'
   };
   const icon = (name, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" ` +
     `stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
@@ -188,10 +200,10 @@
     switch (key) {
       case 'ArrowRight': case ' ': case 'PageDown': next(); break;
       case 'ArrowLeft': case 'PageUp': editing ? show(i - 1, true) : prev(); break;
-      case 'ArrowDown': show(i + 1, true); break;
-      case 'ArrowUp': show(i - 1, true); break;
-      case 'Home': show(0); break;
-      case 'End': show(slides.length - 1, true); break;
+      case 'ArrowDown': show(seek(i + 1, 1), true); break;
+      case 'ArrowUp': show(seek(i - 1, -1), true); break;
+      case 'Home': show(seek(0, 1)); break;
+      case 'End': show(seek(slides.length - 1, -1), true); break;
       case 'n': case 'N':
         if (!editing) return false;
         notes.hidden = !notes.hidden;
@@ -331,7 +343,8 @@
   }
   addEventListener('resize', fit);
   fit();
-  show(i);
+  // a refresh in the edit view is about to return to it, on the same slide
+  show(store.get(EDIT_KEY) ? i : land());
   // keep the screen awake while the deck shows; the browser drops the lock when the tab is hidden, and may refuse it
   const awake = () => { if (document.visibilityState === 'visible') navigator.wakeLock?.request('screen').catch(() => {}); };
   if (mode !== 'view') { awake(); document.addEventListener('visibilitychange', awake); }
@@ -504,7 +517,10 @@
     notes.contentEditable = on && !suggesting;
     fit();
     if (on) show(i, true);
-    else closeAsk();
+    else {
+      closeAsk();
+      show(land(), true);
+    }
   }
   function editCss() {
     return `
@@ -554,7 +570,7 @@
         .e-tools-label{margin:0 6px;color:#6B6B66;font:500 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
         .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
         #edit-bar .e-mode button{height:26px}
-        #edit-bar .e-mode button[aria-pressed=true]{background:#111110;color:#fff}
+        #edit-bar button[aria-pressed=true]{background:#111110;color:#fff}
         #edit-bar button:disabled,.e-foot button:disabled{opacity:.4;pointer-events:none}
         html.editing #edit-rail{display:block;top:${BAR_H}px;left:0;bottom:${STATUS_H}px;width:${RAIL_W}px;overflow:auto;padding:12px 14px 12px 6px;
           background:#FAFAF8;border-right:1px solid rgba(0,0,0,.1)}
@@ -566,6 +582,7 @@
         .e-thumb:hover .e-thumb-frame{box-shadow:0 0 0 1px rgba(0,0,0,.4)}
         .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2px #111110}
         .e-thumb.e-cur .e-thumb-n{color:#111110;font-weight:600}
+        .e-thumb.e-skip iframe{opacity:.35}
         .e-thumb iframe,#edit-layouts iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
         .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:2px;
           background:#fff;color:#111110;box-shadow:0 0 0 1px rgba(0,0,0,.2);cursor:pointer;opacity:0}
@@ -654,7 +671,8 @@
       '<div class="e-ask-tools" hidden>' + tool('e-ask-parent', 'Select parent', 'up') + tool('e-ask-child', 'Select child', 'down') +
       tool('e-ask-remove', 'Delete suggestion', 'trash') + tool('e-ask-save', 'Save suggestion', 'check') + '</div>' +
       '<div class="e-slide-tools"><span class="e-tools-label">Slide</span>' + tool('e-do-add', 'New slide', 'plus') +
-      tool('e-do-copy-slide', 'Duplicate slide', 'copy') + tool('e-do-drop-slide', 'Delete slide', 'trash') + '</div>' +
+      tool('e-do-copy-slide', 'Duplicate slide', 'copy') + tool('e-do-skip-slide', 'Skip slide', 'skip') +
+      tool('e-do-drop-slide', 'Delete slide', 'trash') + '</div>' +
       '<div class="e-mode">' + labelled('e-mode-edit', 'Edit', 'pencil', 'A click on the slide selects, a double-click types') +
       labelled('e-mode-suggest', 'Suggest', 'bubble', 'A click on the slide suggests a change') + '</div>' +
       tool('e-do-undo', 'Undo', 'reset') + labelled('e-save', 'Save', 'save', 'Save the deck to its file') +
@@ -689,7 +707,7 @@
       clear: $('.e-clear'), undoSuggestions: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
       send: ask.querySelector('.e-ask-send'), open: null, chain: [], level: 0, saved: [], undoTimer: null, key: 'deck:edit:' + location.pathname, items: [],
       outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undo: bar.querySelector('.e-do-undo'),
-      save: bar.querySelector('.e-save'), sel: null, typing: null, seq: 0, done: [], unsaved: [], file: null, notesWere: '', slideLabels: [], add: bar.querySelector('.e-do-add'), dropSlide: bar.querySelector('.e-do-drop-slide'),
+      save: bar.querySelector('.e-save'), sel: null, typing: null, seq: 0, done: [], unsaved: [], file: null, notesWere: '', slideLabels: [], add: bar.querySelector('.e-do-add'), skip: bar.querySelector('.e-do-skip-slide'), dropSlide: bar.querySelector('.e-do-drop-slide'),
       askTools: bar.querySelector('.e-ask-tools'), panes: [$('.e-edits'), $('.e-suggestions')], editList: $('.e-edits-list'), editEmpty: $('.e-edits-empty'), editClear: $('.e-clear-edits') };
     ed.undoSuggestions.hidden = true;
     matchThumbs();
@@ -735,6 +753,7 @@
       '.e-ask-save': () => ed.send.click(),
       '.e-do-add': () => layouts.length > 1 ? showLayouts(menu.hidden) : addSlide(layouts[0]),
       '.e-do-copy-slide': duplicateSlide,
+      '.e-do-skip-slide': skipSlide,
       '.e-do-drop-slide': () => deleteSlide(slides[i]),
       '.e-do-undo': undoChange,
       '.e-save': saveDeck,
@@ -1278,7 +1297,11 @@
     drawUnsaved();
     ed.hover.hidden = true;
     ed.where.textContent = `Slide ${i + 1} of ${slides.length}`;
-    ed.thumbs.forEach((t, n) => t.classList.toggle('e-cur', n === i));
+    ed.thumbs.forEach((t, n) => {
+      t.classList.toggle('e-cur', n === i);
+      t.classList.toggle('e-skip', skips(slides[n]));
+    });
+    ed.skip.setAttribute('aria-pressed', skips(slides[i]));
     ed.thumbs[i].scrollIntoView({ block: 'nearest' });
     drawCounts();
     ed.marks.replaceChildren();
@@ -1413,6 +1436,10 @@
       setNotes(root, op.html);
       return true;
     }
+    if (op.kind === 'skip') {
+      root.toggleAttribute('data-skip');
+      return true;
+    }
     const el = findById(root, op.id), other = el && op.kind === 'move' && neighbour(el, op.step);
     if (!el || (op.kind === 'move' && !other)) return false;
     if (op.kind === 'move') swapNodes(el, other);
@@ -1441,11 +1468,14 @@
     afterChange();
     sendThumb(slides.indexOf(slide));
   }
-  // restore a slide's contents from a snapshot
+  // restore a slide's contents, and whether it is skipped, from a snapshot
   function putBack(slide, tree) {
+    const was = skips(slide);
     slide.replaceChildren(...tree.childNodes);
+    slide.toggleAttribute('data-skip', skips(tree));
     renumber();
-    sendThumb(slides.indexOf(slide));
+    // the numbers leave skipped slides out, so one skipped or shown again redraws every thumbnail
+    slides.forEach((s, n) => { if (s === slide || skips(slide) !== was) sendThumb(n); });
   }
   // Put the slides in this order. Each takes along the whitespace and comment before it, as such a comment usually names
   // the slide; whatever follows the last slide stays at the end
@@ -1511,6 +1541,16 @@
   }
   function deleteSlide(slide) {
     changeOrder('Deleted slide', { slide, gone: true }, slides[i]);
+  }
+  // skip the current slide, or stop skipping it; the numbers on the other slides change with it
+  function skipSlide() {
+    settle();
+    const slide = slides[i], head = headingOf(slide), op = { kind: 'skip' };
+    remember({ slide, tree: twin(slide), what: skips(slide) ? 'Unskipped slide' : 'Skipped slide', detail: head && `"${head}"`, op });
+    perform(slide, op);
+    renumber();
+    slides.forEach((s, n) => sendThumb(n));
+    afterChange();
   }
   function afterChange(showing = slides[i]) {
     const sel = ed.sel;

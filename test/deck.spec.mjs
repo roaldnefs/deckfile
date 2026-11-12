@@ -74,6 +74,8 @@ const CONTROLS = `<section class="slide">
   <details><summary>More</summary><p>Hidden</p></details>
 </section>
 `;
+// the first, the middle and the last slide are skipped
+const SKIPPING = ['A', 'B', 'C', 'D', 'E'].map((h, k) => `<section class="slide"${k % 2 ? '' : ' data-skip'}>\n  <h2>${h}</h2>\n</section>`).join('\n\n');
 const FOUR = ['A', 'B', 'C', 'D'].map(h => `<section class="slide">\n  <h2>${h}</h2>\n  <p>Text ${h}</p>\n</section>`).join('\n\n');
 const firstSlide = (html, section) => html.replace(/<div id="stage">\s*\n/, m => m + section);
 const tempFile = html => {
@@ -377,6 +379,38 @@ test.describe('slide view', () => {
     expect(pdf.match(/\/Type\s*\/Page\b(?!s)/g)).toHaveLength(n);
   });
 
+  test('a slide with data-skip is passed over, not counted and not printed', async ({ page }) => {
+    await openOnly(page, SKIPPING);
+    await page.keyboard.press('Escape');
+    // the deck opens on the first slide that is not skipped, also after a reload
+    expect(await current(page)).toBe(1);
+    await page.reload();
+    expect(await current(page)).toBe(1);
+    await expect(page.locator('.slide .counter')).toHaveText(['', '1 / 2', '', '2 / 2', '']);
+    await page.keyboard.press('ArrowRight');
+    expect(await current(page)).toBe(3);
+    // the last slide shown is where the deck ends
+    await page.keyboard.press('ArrowRight');
+    expect(await current(page)).toBe(3);
+    await page.keyboard.press('ArrowLeft');
+    expect(await current(page)).toBe(1);
+    await page.keyboard.press('ArrowLeft');
+    expect(await current(page)).toBe(1);
+    await page.keyboard.press('ArrowDown');
+    expect(await current(page)).toBe(3);
+    await page.keyboard.press('ArrowUp');
+    expect(await current(page)).toBe(1);
+    await page.keyboard.press('End');
+    expect(await current(page)).toBe(3);
+    await page.keyboard.press('Home');
+    expect(await current(page)).toBe(1);
+
+    await page.emulateMedia({ media: 'print' });
+    expect(await page.evaluate(() => [...document.querySelectorAll('.slide')].map(s => getComputedStyle(s).display === 'none'))).toEqual([true, false, true, false, true]);
+    const pdf = (await page.pdf({ preferCSSPageSize: true })).toString('latin1');
+    expect(pdf.match(/\/Type\s*\/Page\b(?!s)/g)).toHaveLength(2);
+  });
+
   test('the only network request is the Google Fonts stylesheet', async ({ page }) => {
     const remote = [];
     page.on('request', r => { if (!r.url().startsWith('file:') && !r.url().startsWith('data:')) remote.push(new URL(r.url()).host); });
@@ -586,6 +620,20 @@ test.describe('presenter view', () => {
     await expect(pv.locator('.p-left')).toHaveText('1 build left on this slide');
     expect(await builtOn(page)).toBe(slides[manual].builds - 1);
     await expect(pv.locator('#notes')).toBeVisible();
+  });
+
+  test('the presenter view counts and previews only the slides that are not skipped', async ({ page }) => {
+    await openOnly(page, SKIPPING);
+    await page.keyboard.press('Escape');
+    const pv = await openPresenter(page);
+    const next = pv.frameLocator('.p-next iframe');
+    await expect(pv.locator('.p-count')).toHaveText('Slide 1 of 2');
+    await expect(next.locator(`${CUR} h2`)).toHaveText('D');
+    await expect(pv.locator('.p-end')).toBeHidden();
+    await pv.keyboard.press('ArrowRight');
+    await expect(pv.locator('.p-count')).toHaveText('Slide 2 of 2');
+    await expect(pv.frameLocator('.p-cur iframe').locator(`${CUR} h2`)).toHaveText('D');
+    await expect(pv.locator('.p-end')).toBeVisible();
   });
 
   test('the presenter view shows the notes of the current slide', async ({ page }) => {
@@ -2556,7 +2604,7 @@ test.describe('edit: slides', () => {
   test('the slide buttons have a section of their own, left of the Edit and Suggest switch', async ({ page }) => {
     await openKnown(page);
     const section = page.locator('.e-slide-tools'), mode = page.locator('.e-mode');
-    await expect(section.locator('button')).toHaveCount(3);
+    await expect(section.locator('button')).toHaveCount(4);
     await expect(section.locator('.e-do-add')).toBeVisible();
     const left = await section.boundingBox(), right = await mode.boundingBox();
     expect(left.x + left.width).toBeLessThanOrEqual(right.x);
@@ -2683,6 +2731,62 @@ test.describe('edit: slides', () => {
     await page.locator('.e-tools .e-do-delete').click();
     expect(await page.locator('.slide').count()).toBe(3);
     await expect(rowsSaid(page)).toHaveText(['Deleted']);
+  });
+
+  test('the toolbar skips the current slide and brings it back, as one edit to undo or remove', async ({ page }) => {
+    await fakeDialog(page);
+    await openOnly(page, LABELLED);
+    const skip = page.locator('.e-do-skip-slide'), thumbs = page.locator('.e-thumb');
+    await expect(skip).toHaveAttribute('aria-label', 'Skip slide');
+    await expect(skip).toHaveAttribute('aria-pressed', 'false');
+    await thumbs.nth(1).click();
+    await skip.click();
+    await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
+    await expect(skip).toHaveAttribute('aria-pressed', 'true');
+    await expect(thumbs.nth(1)).toHaveClass(/e-skip/);
+    await expect(thumbs.nth(0)).not.toHaveClass(/e-skip/);
+    await expect(rowsSaid(page)).toHaveText(['Skipped slide']);
+    // the other slides are numbered without it, in their thumbnails too
+    await expect(page.locator('.slide .counter')).toHaveText(['1 / 2', '', '2 / 2']);
+    await expect(thumbSlide(page, 2).locator('.counter')).toHaveText('2 / 2');
+
+    // the edit view still goes to it and edits it; the show does not
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowRight');
+    expect(await current(page)).toBe(1);
+    await retype(page, '2');
+    expect(await heads(page)).toEqual(['A', 'B2', 'C']);
+    await page.locator('.e-show').click();
+    expect(await current(page)).toBe(2);
+    await page.keyboard.press('ArrowLeft');
+    expect(await current(page)).toBe(0);
+    await page.keyboard.press('e');
+
+    expect(stageOf(await save(page))).toContain('<section class="slide dark" data-skip="">');
+
+    // the button brings it back; × on that edit leaves the text typed since
+    await thumbs.nth(1).click();
+    await skip.click();
+    await expect(page.locator(CUR)).not.toHaveAttribute('data-skip');
+    await expect(skip).toHaveAttribute('aria-pressed', 'false');
+    await expect(rowsSaid(page)).toHaveText(['Unskipped slide']);
+    await undoKey(page);
+    await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
+    await undoKey(page);
+    await undoKey(page);
+    await expect(page.locator(CUR)).not.toHaveAttribute('data-skip');
+    await expect(page.locator('.slide .counter')).toHaveText(['1 / 3', '2 / 3', '3 / 3']);
+    await expect(thumbSlide(page, 2).locator('.counter')).toHaveText('3 / 3');
+    await expect(thumbs.nth(1)).not.toHaveClass(/e-skip/);
+    // back to the deck as saved, where it is skipped
+    await clearEdits(page);
+    await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
+    await skip.click();
+    await retype(page, '3');
+    await pressRowX(rowSaying(page, 'Unskipped slide'));
+    await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
+    expect(await heads(page)).toEqual(['A', 'B23', 'C']);
+    await expect(rowsSaid(page)).toHaveText(['Changed text']);
   });
 
   test('the menu of layouts shows a preview of each, loaded when it first opens', async ({ page }) => {

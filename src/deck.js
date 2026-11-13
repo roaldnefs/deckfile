@@ -763,7 +763,8 @@
       '.e-do-drop-slide': () => deleteSlide(slides[i]),
       '.e-do-undo': undoChange,
       '.e-save': saveDeck,
-      '.e-show': () => edit(false),
+      // the show starts on this slide as a show does, with its builds still to come; E leaves with the slide as it looks here
+      '.e-show': () => { edit(false); show(i); },
       '.e-present': () => act('s')
     };
     for (const [selector, fn] of Object.entries(clicks)) bar.querySelector(selector).addEventListener('click', fn);

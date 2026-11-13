@@ -178,6 +178,9 @@ base64 large images into the HTML.
 Press `E` for the edit view: thumbnails on the left, the slide with its speaker
 notes in the middle, and the unsaved edits or the suggestions on the right. The
 **Edit** / **Suggest** switch in the toolbar sets what a click on the slide does.
+The view shows every slide with all its builds. **Slide Show** starts the show
+on the slide you are on, its builds still to come; `E` leaves with the slide as
+it looks.
 
 **Edit** changes the deck:
 

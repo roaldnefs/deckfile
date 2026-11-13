@@ -820,6 +820,22 @@ test.describe('edit view', () => {
       await expect(page.locator(id)).toBeHidden();
     expect(await page.locator('.slide:visible').count()).toBe(n);
   });
+
+  test('Slide Show starts the slide with its builds still to come; E leaves it as it looks', async ({ page }) => {
+    const { slides, manual } = await info(page);
+    await goTo(page, manual);
+    await page.keyboard.press('e');
+    expect(await builtOn(page)).toBe(slides[manual].builds);
+    await page.keyboard.press('e');
+    expect(await builtOn(page)).toBe(slides[manual].builds);
+    await page.keyboard.press('e');
+    await page.locator('.e-show').click();
+    await expect(page.locator('#edit')).toBeHidden();
+    expect(await current(page)).toBe(manual);
+    expect(await builtOn(page)).toBe(0);
+    await page.keyboard.press('ArrowRight');
+    expect(await builtOn(page)).toBe(1);
+  });
 });
 
 test.describe('suggest', () => {

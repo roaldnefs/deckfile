@@ -147,7 +147,7 @@
       : { deck: 'view', i: after, k: slides[after].dataset.auto !== undefined ? -1 : 0 }, '*');
     pv.label.textContent = nextBuild ? 'Next build' : 'Next slide';
     pv.end.hidden = nextBuild || after !== i;
-    pv.count.textContent = `Slide ${all.indexOf(slides[i]) + 1} of ${all.length}`;
+    pv.count.textContent = skips(slides[i]) ? 'Skipped slide' : `Slide ${all.indexOf(slides[i]) + 1} of ${all.length}`;
     pv.left.textContent = left > 0 ? `${left} build${left > 1 ? 's' : ''} left on this slide` : '';
   }
 
@@ -581,6 +581,10 @@
         .e-thumb.e-cur .e-thumb-frame{box-shadow:0 0 0 2px #111110}
         .e-thumb.e-cur .e-thumb-n{color:#111110;font-weight:600}
         .e-thumb.e-skip iframe{opacity:.35}
+        .e-thumb-skip{display:none;position:absolute;inset:0 0 0 22px;place-items:center;color:#111110;pointer-events:none}
+        .e-thumb.e-skip .e-thumb-skip{display:grid}
+        /* the icon is drawn larger here: the same 1.5 px line as in the toolbar */
+        .e-thumb-skip svg{stroke-width:.86}
         .e-thumb iframe,#edit-layouts iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
         .e-thumb-del{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:2px;
           background:#fff;color:#111110;box-shadow:0 0 0 1px rgba(0,0,0,.2);cursor:pointer;opacity:0}
@@ -602,6 +606,10 @@
         #edit-status button{height:24px;min-width:24px;padding:0 4px;color:#6B6B66}
         #edit-status button[aria-pressed=false]{color:#AEAEB2}
         .e-status-buttons{display:flex;gap:2px}
+        /* in the gap between the toolbar and the slide */
+        .e-skipped{position:fixed;top:${BAR_H + 2}px;left:var(--edit-x);transform:translateX(-50%);display:flex;align-items:center;gap:6px;height:20px;
+          padding:0 8px;border-radius:2px;background:#111110;color:#fff;font:500 11px/1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+        .e-skipped[hidden]{display:none}
         html.editing #edit{top:${BAR_H}px;right:0;bottom:${STATUS_H}px;width:${PANE_W}px;display:flex;flex-direction:column;
           background:#FAFAF8;border-left:1px solid rgba(0,0,0,.1)}
         .e-pane{flex:1;min-height:0;display:flex;flex-direction:column}
@@ -680,7 +688,7 @@
     rail.id = 'edit-rail';
     const status = document.createElement('div');
     status.id = 'edit-status';
-    status.innerHTML = '<span class="e-where"></span><div class="e-status-buttons">' +
+    status.innerHTML = `<span class="e-where"></span><span class="e-skipped" hidden>${icon('skip', 12)}Skipped: not in the show</span><div class="e-status-buttons">` +
       `<button type="button" class="e-toggle-rail" aria-label="Thumbnails" aria-pressed="true" title="Show or hide the thumbnails">${icon('paneLeft')}</button>` +
       `<button type="button" class="e-notes" aria-label="Notes" title="Show or hide the notes">${icon('notes')}</button>` +
       `<button type="button" class="e-toggle-pane" aria-label="Side pane" aria-pressed="true" title="Show or hide the unsaved edits or suggestions">${icon('paneRight')}</button></div>`;
@@ -702,7 +710,7 @@
     const layouts = deckLayouts(), menu = layoutMenu(layouts);
     const $ = s => panel.querySelector(s);
     ed = { layer, menu, marks: layer.firstChild, draft: layer.children[1], hover: layer.lastChild, list: $('.e-list'), empty: $('.e-empty'), copy: $('.e-copy'),
-      clear: $('.e-clear'), undoSuggestions: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
+      clear: $('.e-clear'), undoSuggestions: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, skipped: status.children[1], ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
       send: ask.querySelector('.e-ask-send'), open: null, chain: [], level: 0, saved: [], undoTimer: null, key: 'deck:edit:' + location.pathname, items: [],
       outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undo: bar.querySelector('.e-do-undo'),
       save: bar.querySelector('.e-save'), sel: null, typing: null, seq: 0, done: [], unsaved: [], file: null, notesWere: '', slideLabels: [], add: bar.querySelector('.e-do-add'), skip: bar.querySelector('.e-do-skip-slide'), dropSlide: bar.querySelector('.e-do-drop-slide'),
@@ -978,7 +986,7 @@
     t.className = 'e-thumb';
     t.draggable = true;
     t.innerHTML = `<span class="e-thumb-n">${n + 1}</span><span class="e-thumb-frame"><iframe tabindex="-1" loading="lazy" title="Slide ${n + 1}"></iframe></span>` +
-      '<span class="e-thumb-count" hidden></span>' + tool('e-thumb-del', 'Delete slide', 'close', 12);
+      `<span class="e-thumb-skip">${icon('skip', 28)}</span><span class="e-thumb-count" hidden></span>` + tool('e-thumb-del', 'Delete slide', 'close', 12);
     const f = t.querySelector('iframe'), del = t.lastChild;
     f.addEventListener('load', () => sendThumb(n));
     f.src = here + '?view';
@@ -1300,6 +1308,7 @@
       t.classList.toggle('e-skip', skips(slides[n]));
     });
     ed.skip.setAttribute('aria-pressed', skips(slides[i]));
+    ed.skipped.hidden = !skips(slides[i]);
     ed.thumbs[i].scrollIntoView({ block: 'nearest' });
     drawCounts();
     ed.marks.replaceChildren();
@@ -1435,7 +1444,7 @@
       return true;
     }
     if (op.kind === 'skip') {
-      root.toggleAttribute('data-skip');
+      root.toggleAttribute('data-skip', op.on);
       return true;
     }
     const el = findById(root, op.id), other = el && op.kind === 'move' && neighbour(el, op.step);
@@ -1543,8 +1552,8 @@
   // skip the current slide, or stop skipping it; the numbers on the other slides change with it
   function skipSlide() {
     settle();
-    const slide = slides[i], head = headingOf(slide), op = { kind: 'skip' };
-    remember({ slide, tree: twin(slide), what: skips(slide) ? 'Unskipped slide' : 'Skipped slide', detail: head && `"${head}"`, op });
+    const slide = slides[i], head = headingOf(slide), op = { kind: 'skip', on: !skips(slide) };
+    remember({ slide, tree: twin(slide), what: op.on ? 'Skipped slide' : 'Unskipped slide', detail: head && `"${head}"`, op });
     perform(slide, op);
     renumber();
     slides.forEach((s, n) => sendThumb(n));

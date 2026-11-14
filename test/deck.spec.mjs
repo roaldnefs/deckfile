@@ -636,6 +636,17 @@ test.describe('presenter view', () => {
     await expect(pv.locator('.p-end')).toBeVisible();
   });
 
+  test('the presenter view has no number for a skipped slide the show started on', async ({ page }) => {
+    await openOnly(page, SKIPPING);
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('e');
+    expect(await current(page)).toBe(0);
+    const pv = await openPresenter(page);
+    await expect(pv.locator('.p-count')).toHaveText('Skipped slide');
+    await pv.keyboard.press('ArrowRight');
+    await expect(pv.locator('.p-count')).toHaveText('Slide 1 of 2');
+  });
+
   test('the presenter view shows the notes of the current slide', async ({ page }) => {
     const pv = await openPresenter(page);
     await expect(pv.locator('.p-count')).toBeVisible();
@@ -2745,6 +2756,18 @@ test.describe('edit: slides', () => {
     await expect(skip).toHaveAttribute('aria-pressed', 'true');
     await expect(thumbs.nth(1)).toHaveClass(/e-skip/);
     await expect(thumbs.nth(0)).not.toHaveClass(/e-skip/);
+    // it says so above the slide and on the thumbnail, and nowhere on a slide that is shown
+    const flag = page.locator('.e-skipped');
+    await expect(flag).toBeVisible();
+    await expect(flag).toHaveText('Skipped: not in the show');
+    await expect(thumbs.nth(1).locator('.e-thumb-skip')).toBeVisible();
+    await expect(thumbs.nth(0).locator('.e-thumb-skip')).toBeHidden();
+    const above = await flag.boundingBox(), slide = await page.locator(CUR).boundingBox();
+    expect(above.y + above.height).toBeLessThanOrEqual(slide.y);
+    await thumbs.nth(0).click();
+    await expect(flag).toBeHidden();
+    await thumbs.nth(1).click();
+    await expect(flag).toBeVisible();
     await expect(rowsSaid(page)).toHaveText(['Skipped slide']);
     // the other slides are numbered without it, in their thumbnails too
     await expect(page.locator('.slide .counter')).toHaveText(['1 / 2', '', '2 / 2']);
@@ -2782,6 +2805,7 @@ test.describe('edit: slides', () => {
     await expect(page.locator('.slide .counter')).toHaveText(['1 / 3', '2 / 3', '3 / 3']);
     await expect(thumbSlide(page, 2).locator('.counter')).toHaveText('3 / 3');
     await expect(thumbs.nth(1)).not.toHaveClass(/e-skip/);
+    await expect(page.locator('.e-skipped')).toBeHidden();
     // back to the deck as saved, where it is skipped
     await clearEdits(page);
     await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
@@ -2791,6 +2815,15 @@ test.describe('edit: slides', () => {
     await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
     expect(await heads(page)).toEqual(['A', 'B23', 'C']);
     await expect(rowsSaid(page)).toHaveText(['Changed text']);
+
+    // × on the first of two leaves the slide as the one that is left says
+    await clearEdits(page);
+    await skip.click();
+    await skip.click();
+    await expect(rowsSaid(page)).toHaveText(['Unskipped slide', 'Skipped slide']);
+    await pressRowX(rowSaying(page, 'Unskipped slide'));
+    await expect(rowsSaid(page)).toHaveText(['Skipped slide']);
+    await expect(page.locator(CUR)).toHaveAttribute('data-skip', '');
   });
 
   test('the menu of layouts shows a preview of each, loaded when it first opens', async ({ page }) => {

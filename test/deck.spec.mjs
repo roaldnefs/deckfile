@@ -2756,7 +2756,11 @@ test.describe('edit: slides', () => {
     expect(await current(page)).toBe(1);
     await retype(page, '2');
     expect(await heads(page)).toEqual(['A', 'B2', 'C']);
+    // a show started on it shows it, without a number; from there the show goes on and does not come back to it
     await page.locator('.e-show').click();
+    expect(await current(page)).toBe(1);
+    await expect(page.locator(`${CUR} .counter`)).toHaveText('');
+    await page.keyboard.press('ArrowRight');
     expect(await current(page)).toBe(2);
     await page.keyboard.press('ArrowLeft');
     expect(await current(page)).toBe(0);

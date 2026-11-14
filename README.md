@@ -157,6 +157,7 @@ The engine needs very little markup:
 | `data-auto="600"` on a section | its builds reveal by themselves, one every 600 ms (500 without a number), as soon as the slide shows; `→` and `←` take over |
 | `data-skip` on a section | the slide is skipped: left out of the show, the slide numbers and the print, and still there in the edit view |
 | `<div class="s-notes">` inside a slide | speaker notes, for the presenter and edit views |
+| `data-public` on the stage | set by **Public copy** on the copy it makes: the deck opens without the edit view |
 
 The engine sets `.current` on the slide shown and `.on` on each build it
 reveals, and adds a `<span class="counter">` with the slide number to every
@@ -200,6 +201,12 @@ it looks.
 - **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose in Chromium,
   as a download elsewhere. It overwrites what is there, so reload first if an
   agent or editor changed the file since you opened it.
+- **Save as…** makes a **Public copy** to send to your audience, named
+  `…-public.html`: the deck as it is now, without the speaker notes, the
+  skipped slides, the layouts and the comments between the slides. It says
+  what it leaves out first, then asks where to put the copy in Chromium and
+  downloads it elsewhere. The copy has no edit view, and not the code for it
+  either; it still presents and prints.
 
 **Suggest** leaves the deck alone and collects notes for whoever edits the file:
 
@@ -307,6 +314,9 @@ Or copy or symlink [`skills/deck`](skills/deck) into `~/.claude/skills/`.
   read it: self-closed SVG tags, `<tbody>` in tables, entities. Comments and
   indentation stay, and later saves change only what you changed.
 - Photos sit beside the file, so a deck with photos travels as a folder.
+- A public copy has the engine without the code of the edit view, which
+  makes the file a good deal smaller. `update` puts the whole engine back;
+  the edit view then stays off until `data-public` is removed from the stage.
 
 ## Development
 

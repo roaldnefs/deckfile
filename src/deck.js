@@ -101,12 +101,13 @@
     autoTimer = setTimeout(step, delay);
   }
   // slide n, or the first one from there on, going d, that is not skipped; the edit view passes over none.
-  // Where the deck ends first, it stays on the current slide
+  // Where the deck ends first, it stays on the current slide. So the show never comes to a skipped slide, and only
+  // shows one when it starts there from the edit view: a backup slide, for the question it answers
   function seek(n, d) {
     while (!editing && skips(slides[n])) n += d;
     return slides[n] ? n : i;
   }
-  // where the show is when the current slide is skipped: on the next one shown, or else the one before
+  // where a deck opens when the current slide is skipped: on the next one shown, or else the one before
   const land = () => seek(seek(i, 1), -1);
   function next() {
     clearTimeout(autoTimer);
@@ -517,10 +518,7 @@
     notes.contentEditable = on && !suggesting;
     fit();
     if (on) show(i, true);
-    else {
-      closeAsk();
-      show(land(), true);
-    }
+    else closeAsk();
   }
   function editCss() {
     return `

@@ -190,7 +190,8 @@ notes in the middle, and the unsaved edits or the suggestions on the right. The
   `<template data-deck="layouts">`, which you can change or add to.
 - **Skip slide** keeps the current slide in the file and out of the show: a
   backup slide, or one that is not ready. Its thumbnail is dimmed, and the
-  button brings it back.
+  button brings it back. A show started on it from the edit view still shows
+  it, for the question it answers; the next key goes on with the deck.
 - **Undo** or `Cmd/Ctrl+Z` takes back one change. × on a row in the list of
   unsaved edits removes just that edit.
 - **Save** or `Cmd/Ctrl+S` writes the deck: to a file you choose in Chromium,

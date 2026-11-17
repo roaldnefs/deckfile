@@ -169,7 +169,7 @@
     help: 'M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM6.2 6.2a1.9 1.9 0 1 1 2.8 1.7c-.6.3-1 .8-1 1.4M8 11.6v.1',
     bubble: 'M3 2.5h10A1.5 1.5 0 0 1 14.5 4v6a1.5 1.5 0 0 1-1.5 1.5H8L4.5 14v-2.5H3A1.5 1.5 0 0 1 1.5 10V4A1.5 1.5 0 0 1 3 2.5z',
     save: 'M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11', down: 'M8 3v10M3.5 8.5 8 13l4.5-4.5', check: 'M3 8.5 6.5 12 13 4.5',
-    plus: 'M8 3v10M3 8h10', share: 'M8 10V2M4.5 5.5 8 2l3.5 3.5M2.5 13.5h11', skip: 'M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM3 2.5l10 11'
+    plus: 'M8 3v10M3 8h10', saveAs: 'M6.5 3v7M3.5 7l3 3 3-3M2.5 13.5h11M12.5 2v4M10.5 4h4', chevron: 'M4.5 6.5 8 10l3.5-3.5', skip: 'M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM3 2.5l10 11'
   };
   const icon = (name, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" ` +
     `stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
@@ -569,18 +569,21 @@
           box-shadow:0 0 0 1px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.12);font:500 13px/1 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
         #edit-layouts button{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:3px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
         #edit-layouts button:hover{background:rgba(0,0,0,.06)}
-        /* what Public copy leaves out, under its button */
-        html.editing #edit-copy{position:fixed;z-index:30;display:block;width:300px;box-sizing:border-box;padding:14px 16px;border-radius:4px;background:#fff;color:#111110;
-          box-shadow:0 0 0 1px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.12);font:400 13px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-        #edit-copy p{margin:0 0 12px}
-        #edit-copy button{display:inline-flex;align-items:center;gap:6px;max-width:100%;height:30px;padding:0 12px;border:0;border-radius:3px;background:#111110;color:#fff;
-          font:500 13px/1 system-ui,sans-serif;cursor:pointer}
-        #edit-copy button:hover{background:#3A3A37}
-        #edit-copy button span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        /* what Save can write, under its button: the deck, or a public copy and what that leaves out */
+        html.editing #edit-copy{position:fixed;z-index:30;display:flex;flex-direction:column;gap:2px;width:320px;box-sizing:border-box;padding:6px;border-radius:4px;
+          background:#fff;color:#111110;box-shadow:0 0 0 1px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.12);font:400 13px/1.45 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        #edit-copy button{display:grid;grid-template-columns:16px 1fr;gap:10px;align-items:start;padding:8px 10px;border:0;border-radius:3px;background:none;color:inherit;
+          font:inherit;text-align:left;cursor:pointer}
+        #edit-copy button:hover{background:rgba(0,0,0,.06)}
+        #edit-copy svg{margin-top:1px}
+        #edit-copy b{display:block;font-weight:500}
+        #edit-copy small{display:block;margin-top:2px;color:#6B6B66;font-size:12px}
+        #edit-bar .e-save svg:last-child{margin-left:-2px;color:#6B6B66}
         .e-tools,.e-ask-tools,.e-slide-tools{display:flex;align-items:center;gap:2px;margin-right:8px;padding-right:8px;border-right:1px solid rgba(0,0,0,.1)}
         .e-tools-label{margin:0 6px;color:#6B6B66;font:500 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
         .e-mode{display:flex;gap:2px;margin:0 8px;padding:2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
         #edit-bar .e-mode button{height:26px}
+        #edit-bar button[aria-expanded=true]{background:rgba(0,0,0,.06)}
         #edit-bar button[aria-pressed=true]{background:#111110;color:#fff}
         #edit-bar button:disabled,.e-foot button:disabled{opacity:.4;pointer-events:none}
         html.editing #edit-rail{display:block;top:${BAR_H}px;left:0;bottom:${STATUS_H}px;width:${RAIL_W}px;overflow:auto;padding:12px 14px 12px 6px;
@@ -694,8 +697,8 @@
       tool('e-do-drop-slide', 'Delete slide', 'trash') + '</div>' +
       '<div class="e-mode">' + labelled('e-mode-edit', 'Edit', 'pencil', 'A click on the slide selects, a double-click types') +
       labelled('e-mode-suggest', 'Suggest', 'bubble', 'A click on the slide suggests a change') + '</div>' +
-      tool('e-do-undo', 'Undo', 'reset') + labelled('e-save', 'Save', 'save', 'Save the deck to its file') +
-      labelled('e-copy-out', 'Save as…', 'copy', 'A copy of the deck to hand out') +
+      tool('e-do-undo', 'Undo', 'reset') +
+      `<button type="button" class="e-save" aria-haspopup="true" aria-expanded="false" title="Save the deck, or a public copy to hand out">${icon('save')}<span>Save</span>${icon('chevron', 12)}</button>` +
       tool('e-show', 'Slide Show', 'play') + tool('e-present', 'Presenter View', 'display');
     bar.firstChild.textContent = document.title;
     const rail = document.createElement('div');
@@ -724,10 +727,12 @@
     const copyBox = document.createElement('div');
     copyBox.id = 'edit-copy';
     copyBox.hidden = true;
-    copyBox.innerHTML = '<p></p>' + labelled('e-copy-go', 'Public copy', 'share');
+    const option = (cls, name, title) => `<button type="button" class="${cls}">${icon(name)}<span><b>${title}</b><small></small></span></button>`;
+    copyBox.innerHTML = option('e-save-go', 'save', 'Save') + option('e-copy-go', 'saveAs', 'Save public copy…');
+    copyBox.querySelector('.e-save-go small').textContent = 'Writes the deck to its file, with your changes. Cmd/Ctrl+S';
     const layouts = deckLayouts(), menu = layoutMenu(layouts);
     const $ = s => panel.querySelector(s);
-    ed = { layer, menu, copyBox, copyOut: bar.querySelector('.e-copy-out'), marks: layer.firstChild, draft: layer.children[1], hover: layer.lastChild, list: $('.e-list'), empty: $('.e-empty'), copy: $('.e-copy'),
+    ed = { layer, menu, copyBox, marks: layer.firstChild, draft: layer.children[1], hover: layer.lastChild, list: $('.e-list'), empty: $('.e-empty'), copy: $('.e-copy'),
       clear: $('.e-clear'), undoSuggestions: $('.e-undo'), rail, thumbs: [], dragged: null, where: status.firstChild, skipped: status.children[1], ask, ta: ask.querySelector('textarea'), path: ask.firstChild,
       send: ask.querySelector('.e-ask-send'), open: null, chain: [], level: 0, saved: [], undoTimer: null, key: 'deck:edit:' + location.pathname, items: [],
       outline: layer.children[2], tools: bar.querySelector('.e-tools'), modes: bar.querySelectorAll('.e-mode button'), undo: bar.querySelector('.e-do-undo'),
@@ -748,7 +753,7 @@
       if (ed.open && !ask.contains(e.target) && !ed.askTools.contains(e.target) && closeAsk()) drawEdit();
       if (ed.typing && !ed.typing.el.contains(e.target)) commitText();
       if (!menu.contains(e.target) && !ed.add.contains(e.target)) showLayouts(false);
-      if (!copyBox.contains(e.target) && !ed.copyOut.contains(e.target)) showCopy(false);
+      if (!copyBox.contains(e.target) && !ed.save.contains(e.target)) showCopy(false);
       if (!notes.contains(e.target)) notes.blur();
     }, true);
     addEventListener('resize', () => { if (ed.open) placeAsk(); });
@@ -781,8 +786,7 @@
       '.e-do-skip-slide': skipSlide,
       '.e-do-drop-slide': () => deleteSlide(slides[i]),
       '.e-do-undo': undoChange,
-      '.e-save': saveDeck,
-      '.e-copy-out': () => showCopy(copyBox.hidden),
+      '.e-save': () => showCopy(copyBox.hidden),
       // the show starts on this slide as a show does, with its builds still to come; E leaves with the slide as it looks here
       '.e-show': () => { edit(false); show(i); },
       '.e-present': () => act('s')
@@ -834,7 +838,8 @@
       showSlide(from);
     });
     stage.append(layer);
-    copyBox.lastChild.addEventListener('click', publicCopy);
+    copyBox.querySelector('.e-save-go').addEventListener('click', () => { showCopy(false); saveDeck(); });
+    copyBox.querySelector('.e-copy-go').addEventListener('click', publicCopy);
     document.body.append(bar, rail, status, panel, ask, menu, copyBox);
   }
   // the layouts New slide offers: those in the deck's <template data-deck="layouts">, or else one plain slide
@@ -1729,15 +1734,15 @@
   }
   const HTML = [{ description: 'HTML', accept: { 'text/html': ['.html'] } }];
   const copyName = () => (decodeURIComponent(location.pathname).split('/').pop() || 'index.html').replace(/(\.html?)?$/i, '-public$1');
-  // under the Save as button: what the public copy is for and what it leaves out, said before it is made, and the button that makes it
+  // under the Save button: save the deck, or a public copy, with what that leaves out said before it is made
   function showCopy(on) {
     ed.copyBox.hidden = !on;
-    ed.copyOut.setAttribute('aria-expanded', on);
+    ed.save.setAttribute('aria-expanded', on);
     if (!on) return;
     const n = slides.length - shown().length;
-    ed.copyBox.firstChild.textContent = 'A copy of the deck as it is now, to send to your audience. It leaves out the speaker notes, ' +
-      (n ? `the ${n} skipped slide${n > 1 ? 's' : ''}` : 'any skipped slides') + ', the comments between the slides and the edit view. This deck stays as it is.';
-    const r = ed.copyOut.getBoundingClientRect();
+    ed.copyBox.querySelector('.e-copy-go small').textContent = 'A copy to send to your audience, without the speaker notes, ' +
+      (n ? `the ${n} skipped slide${n > 1 ? 's' : ''}` : 'any skipped slides') + ', the comments between the slides and the edit view.';
+    const r = ed.save.getBoundingClientRect();
     ed.copyBox.style.top = r.bottom + 4 + 'px';
     ed.copyBox.style.right = innerWidth - r.right + 'px';
   }
@@ -1770,8 +1775,7 @@
       if (e.name === 'AbortError') return;  // the file dialog was cancelled
       label = 'Save failed';
     }
-    ed.copyOut.lastChild.textContent = label;
-    setTimeout(() => { ed.copyOut.lastChild.textContent = 'Save as…'; }, 2000);
+    saved(label);
   }
   // write the deck: to a file chosen once per visit where the browser can, else as a download
   async function saveDeck() {
@@ -1795,8 +1799,13 @@
       ed.file = null;
       label = 'Save failed';
     }
-    ed.save.lastChild.textContent = label;
-    setTimeout(() => { ed.save.lastChild.textContent = 'Save'; }, 2000);
+    saved(label);
+  }
+  // what a save did, on the Save button for a moment
+  function saved(label) {
+    const text = ed.save.querySelector('span');
+    text.textContent = label;
+    setTimeout(() => { text.textContent = 'Save'; }, 2000);
   }
   // the clipboard API, or the older execCommand where a browser refuses it
   function copyText(text) {

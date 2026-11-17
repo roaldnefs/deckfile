@@ -256,8 +256,13 @@ async function fakeDialog(page) {
   });
   await page.reload();
 }
-async function save(page) {
+// Save opens its menu; Save there writes the deck
+async function clickSave(page) {
   await page.locator('.e-save').click();
+  await page.locator('.e-save-go').click();
+}
+async function save(page) {
+  await clickSave(page);
   await expect(page.locator('.e-save')).toHaveText('Saved');
   await expect(page.locator('.e-save')).toHaveText('Save', { timeout: 4000 });
   return page.evaluate(() => window.saved);
@@ -2031,14 +2036,15 @@ test.describe('saving', () => {
     await page.locator('.e-do-duplicate').click();
 
     await page.evaluate(() => { window.showSaveFilePicker = async () => { throw new DOMException('no', 'AbortError'); }; });
-    await page.locator('.e-save').click();
+    await clickSave(page);
     await expect(page.locator('.e-save')).toHaveText('Save');
     await page.evaluate(() => { window.showSaveFilePicker = async () => { throw new DOMException('no', 'NotAllowedError'); }; });
-    await page.locator('.e-save').click();
+    await clickSave(page);
     await expect(page.locator('.e-save')).toHaveText('Save failed');
 
     await page.evaluate(() => { delete window.showSaveFilePicker; });
-    const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.e-save').click()]);
+    await page.locator('.e-save').click();
+    const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.e-save-go').click()]);
     expect(download.suggestedFilename()).toBe(path.basename(deck));
     expect(readFileSync(await download.path(), 'utf8')).toMatch(/^<!doctype html>/i);
     await expect(page.locator('.e-save')).toHaveText('Downloaded');
@@ -2047,7 +2053,7 @@ test.describe('saving', () => {
     expect(dialogs).toEqual([]);
   });
 
-  test('Save as says what the public copy leaves out, then makes the deck without it and without the edit view', async ({ page }) => {
+  test('Save offers a public copy, says what it leaves out, then makes the deck without it and without the edit view', async ({ page }) => {
     await openOnly(page, `<!-- say hello -->
 <section class="slide">
   <h2>A</h2>
@@ -2064,12 +2070,13 @@ test.describe('saving', () => {
 </section>`);
     // what is not saved yet is in the copy too
     await retype(page, '2');
-    const button = page.locator('.e-copy-out'), box = page.locator('#edit-copy'), name = path.basename(deck).replace('.html', '-public.html');
-    await expect(button).toHaveText('Save as…');
+    const button = page.locator('.e-save'), box = page.locator('#edit-copy'), go = box.locator('.e-copy-go'), name = path.basename(deck).replace('.html', '-public.html');
+    await expect(button).toHaveText('Save');
     await expect(box).toBeHidden();
     await button.click();
-    await expect(box.locator('p')).toContainText('leaves out the speaker notes, the 1 skipped slide, the comments between the slides and the edit view');
-    await expect(box.locator('button')).toHaveText('Public copy');
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(box.locator('button b')).toHaveText(['Save', 'Save public copy…']);
+    await expect(go).toContainText('without the speaker notes, the 1 skipped slide, the comments between the slides and the edit view');
     expect(await unmarked(page, '#edit-copy button')).toEqual([]);
     const fits = await box.boundingBox();
     expect(fits.x + fits.width).toBeLessThanOrEqual(1600);
@@ -2085,19 +2092,19 @@ test.describe('saving', () => {
       window.showSaveFilePicker = async o => ({ createWritable: async () => ({ write: async t => { window.copied = [o.suggestedName, t]; }, close: async () => {} }) });
     });
     await button.click();
-    await box.locator('button').click();
+    await go.click();
     await expect(button).toHaveText('Saved a copy');
-    await expect(button).toHaveText('Save as…', { timeout: 4000 });
+    await expect(button).toHaveText('Save', { timeout: 4000 });
     const [suggested, written] = await page.evaluate(() => window.copied);
     expect(suggested).toBe(name);
     // without one, it downloads
     await page.evaluate(() => { delete window.showSaveFilePicker; });
     await button.click();
-    const [download] = await Promise.all([page.waitForEvent('download'), box.locator('button').click()]);
+    const [download] = await Promise.all([page.waitForEvent('download'), go.click()]);
     expect(download.suggestedFilename()).toBe(name);
     await expect(box).toBeHidden();
     await expect(button).toHaveText('Downloaded');
-    await expect(button).toHaveText('Save as…', { timeout: 4000 });
+    await expect(button).toHaveText('Save', { timeout: 4000 });
     const html = readFileSync(await download.path(), 'utf8');
     expect(written).toBe(html);
     const stage = html.slice(html.indexOf('<div id="stage"'), html.indexOf('<script data-deck="engine">\n'));
